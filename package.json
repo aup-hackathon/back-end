@@ -2,8 +2,12 @@
   "name": "flowforge-monorepo",
   "private": true,
   "scripts": {
+    "build": "pnpm --filter backend run build",
+    "test": "pnpm --filter backend run test",
+    "lint": "pnpm --filter backend run lint",
     "backend:dev": "pnpm --filter backend run start:dev",
     "backend:build": "pnpm --filter backend run build",
+    "backend:test": "pnpm --filter backend run test",
     "frontend:dev": "pnpm --filter frontend run dev",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down"

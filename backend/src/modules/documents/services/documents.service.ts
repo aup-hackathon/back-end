@@ -7,11 +7,20 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
+import { ActorType } from '@database/enums';
+import { JsonValue } from '@database/types/json-value.type';
+import { AuditLog } from '@modules/audit/entities/audit-log.entity';
 import { Session } from '@modules/sessions/entities';
 import { Workflow } from '@modules/workflows/entities';
+import { NatsPublisherService } from '@nats/nats.publisher.service';
 
 import { Document } from '../entities';
-import { DocumentResponseDto, UploadDocumentDto } from '../dtos';
+import {
+  DocumentExtractedTextDto,
+  DocumentResponseDto,
+  UpdateExtractedTextDto,
+  UploadDocumentDto,
+} from '../dtos';
 import { DocumentStorageService } from './document-storage.service';
 import {
   assertDocumentFileSizeWithinLimit,
@@ -35,7 +44,10 @@ export class DocumentsService {
     private readonly sessionRepository: Repository<Session>,
     @InjectRepository(Workflow)
     private readonly workflowRepository: Repository<Workflow>,
+    @InjectRepository(AuditLog)
+    private readonly auditLogRepository: Repository<AuditLog>,
     private readonly documentStorageService: DocumentStorageService,
+    private readonly natsPublisher: NatsPublisherService,
   ) {}
 
   async uploadDocument(
@@ -92,6 +104,7 @@ export class DocumentsService {
     });
 
     const savedDocument = await this.documentRepository.save(document);
+    await this.publishDocumentPreprocess(savedDocument);
 
     return this.toDocumentResponse(savedDocument, storageResult.presignedUrl);
   }
@@ -142,6 +155,86 @@ export class DocumentsService {
     });
 
     return documents.map((document) => this.toDocumentResponse(document));
+  }
+
+  async getExtractedText(
+    documentId: string,
+    currentUser: RequestUser,
+  ): Promise<DocumentExtractedTextDto> {
+    const document = await this.findActiveOwnedDocument(documentId, currentUser.orgId);
+    if (!document) {
+      throw new NotFoundException('Document not found.');
+    }
+
+    return this.toExtractedTextResponse(document);
+  }
+
+  async updateExtractedText(
+    documentId: string,
+    dto: UpdateExtractedTextDto,
+    currentUser: RequestUser,
+  ): Promise<DocumentExtractedTextDto> {
+    const document = await this.findActiveOwnedDocument(documentId, currentUser.orgId);
+    if (!document) {
+      throw new NotFoundException('Document not found.');
+    }
+
+    const beforeState = {
+      extracted_text: document.extractedText,
+      preprocessing_confidence: document.preprocessingConfidence,
+    };
+
+    document.extractedText = dto.extractedText;
+    const savedDocument = await this.documentRepository.save(document);
+    await this.auditLogRepository.insert({
+      workflowId: savedDocument.workflowId,
+      actorId: currentUser.id,
+      actorType: ActorType.USER,
+      eventType: 'DOCUMENT_EXTRACTED_TEXT_UPDATED',
+      elementId: savedDocument.id,
+      beforeState,
+      afterState: {
+        extracted_text: savedDocument.extractedText,
+        preprocessing_confidence: savedDocument.preprocessingConfidence,
+      },
+    });
+
+    return this.toExtractedTextResponse(savedDocument);
+  }
+
+  async reprocessDocument(
+    documentId: string,
+    currentUser: RequestUser,
+  ): Promise<DocumentResponseDto> {
+    const document = await this.findActiveOwnedDocument(documentId, currentUser.orgId);
+    if (!document) {
+      throw new NotFoundException('Document not found.');
+    }
+
+    if (!document.sessionId || !document.workflowId) {
+      throw new BadRequestException('Only workflow session documents can be reprocessed.');
+    }
+
+    const nextVersion = await this.getNextDocumentVersion(document.sessionId, document.filename);
+    const nextDocument = this.documentRepository.create({
+      workflowId: document.workflowId,
+      sessionId: document.sessionId,
+      filename: document.filename,
+      fileType: document.fileType,
+      storageUrl: document.storageUrl,
+      fileSizeBytes: document.fileSizeBytes,
+      extractedText: null,
+      preprocessingConfidence: null,
+      docVersion: nextVersion,
+      deletedAt: null,
+      archivedAt: null,
+    });
+
+    const savedDocument = await this.documentRepository.save(nextDocument);
+    await this.publishDocumentPreprocess(savedDocument);
+    const presignedUrl = await this.documentStorageService.createPresignedUrl(savedDocument.storageUrl);
+
+    return this.toDocumentResponse(savedDocument, presignedUrl);
   }
 
   private async findOwnedSession(sessionId: string, orgId: string): Promise<Session | null> {
@@ -217,5 +310,22 @@ export class DocumentsService {
       createdAt: document.createdAt.toISOString(),
       deletedAt: document.deletedAt ? document.deletedAt.toISOString() : null,
     };
+  }
+
+  private toExtractedTextResponse(document: Document): DocumentExtractedTextDto {
+    return {
+      documentId: document.id,
+      docVersion: document.docVersion,
+      extractedText: document.extractedText,
+      preprocessingConfidence: document.preprocessingConfidence,
+    };
+  }
+
+  private publishDocumentPreprocess(document: Document): Promise<void> {
+    return this.natsPublisher.publishDocumentPreprocess({
+      document_id: document.id,
+      file_type: document.fileType,
+      storage_url: document.storageUrl,
+    });
   }
 }

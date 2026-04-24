@@ -1,17 +1,19 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   HttpCode,
+  Patch,
   Param,
   ParseUUIDPipe,
   Post,
   UploadedFile,
   UseGuards,
   UseInterceptors,
-  Body,
 } from '@nestjs/common';
 import {
+  ApiAcceptedResponse,
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
@@ -26,7 +28,12 @@ import { memoryStorage } from 'multer';
 import { CurrentUser } from '@core/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@core/guards/jwt-auth.guard';
 
-import { DocumentResponseDto, UploadDocumentDto } from '../dtos';
+import {
+  DocumentExtractedTextDto,
+  DocumentResponseDto,
+  UpdateExtractedTextDto,
+  UploadDocumentDto,
+} from '../dtos';
 import { DocumentsService } from '../services';
 import { MAX_DOCUMENT_FILE_SIZE_BYTES } from '../utils/document.constants';
 
@@ -76,6 +83,38 @@ export class DocumentsController {
     @CurrentUser() currentUser: { id: string; orgId: string; role: string },
   ): Promise<DocumentResponseDto> {
     return this.documentsService.getDocument(documentId, currentUser);
+  }
+
+  @Get(':id/extracted-text')
+  @ApiOperation({ summary: 'Get the current extracted text for a document.' })
+  @ApiOkResponse({ type: DocumentExtractedTextDto })
+  getExtractedText(
+    @Param('id', new ParseUUIDPipe()) documentId: string,
+    @CurrentUser() currentUser: { id: string; orgId: string; role: string },
+  ): Promise<DocumentExtractedTextDto> {
+    return this.documentsService.getExtractedText(documentId, currentUser);
+  }
+
+  @Patch(':id/extracted-text')
+  @ApiOperation({ summary: 'Update extracted text for a document and audit the change.' })
+  @ApiOkResponse({ type: DocumentExtractedTextDto })
+  updateExtractedText(
+    @Param('id', new ParseUUIDPipe()) documentId: string,
+    @Body() dto: UpdateExtractedTextDto,
+    @CurrentUser() currentUser: { id: string; orgId: string; role: string },
+  ): Promise<DocumentExtractedTextDto> {
+    return this.documentsService.updateExtractedText(documentId, dto, currentUser);
+  }
+
+  @Post(':id/reprocess')
+  @HttpCode(202)
+  @ApiOperation({ summary: 'Create a new document version and re-trigger preprocessing.' })
+  @ApiAcceptedResponse({ type: DocumentResponseDto })
+  reprocessDocument(
+    @Param('id', new ParseUUIDPipe()) documentId: string,
+    @CurrentUser() currentUser: { id: string; orgId: string; role: string },
+  ): Promise<DocumentResponseDto> {
+    return this.documentsService.reprocessDocument(documentId, currentUser);
   }
 
   @Delete(':id')

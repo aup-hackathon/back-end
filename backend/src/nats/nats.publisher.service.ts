@@ -5,6 +5,7 @@ import {
   AiContextLoadEvent,
   AiTaskDivergenceEvent,
   AiTaskNewEvent,
+  DocumentPreprocessEvent,
   SessionFinalizedEvent,
   SystemHealthPingEvent,
   WorkflowUpdatedEvent,
@@ -37,6 +38,14 @@ export class NatsPublisherService {
       SUBJECTS.AI_CONTEXT_LOAD,
       payload as unknown as Record<string, unknown>,
       this.buildMsgId(payload.correlation_id, SUBJECTS.AI_CONTEXT_LOAD),
+    );
+  }
+
+  async publishDocumentPreprocess(payload: DocumentPreprocessEvent): Promise<void> {
+    await this.natsClient.publish(
+      SUBJECTS.DOCUMENT_PREPROCESS,
+      payload as unknown as Record<string, unknown>,
+      this.buildMsgId(payload.document_id, SUBJECTS.DOCUMENT_PREPROCESS),
     );
   }
 

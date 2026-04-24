@@ -63,6 +63,7 @@ export class NatsClientService implements OnModuleDestroy {
       { subject: 'ai.tasks.result', durableName: CONSUMERS.AI_RESULT },
       { subject: 'ai.tasks.progress', durableName: CONSUMERS.AI_PROGRESS },
       { subject: 'ai.tasks.divergence.result', durableName: CONSUMERS.DIVERGENCE_RESULT },
+      { subject: 'document.preprocess.result', durableName: CONSUMERS.DOCUMENT_PREPROCESS_RESULT },
       { subject: 'system.health.ping', durableName: CONSUMERS.HEALTH_PING },
     ];
 

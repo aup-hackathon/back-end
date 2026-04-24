@@ -100,6 +100,20 @@ describe('NatsPublisherService', () => {
     );
   });
 
+  it('publishes document preprocess events', async () => {
+    await service.publishDocumentPreprocess({
+      document_id: '99999999-9999-4999-8999-999999999999',
+      file_type: 'application/pdf',
+      storage_url: 'minio://documents/sample.pdf',
+    });
+
+    expect(natsClient.publish).toHaveBeenCalledWith(
+      'document.preprocess',
+      expect.objectContaining({ file_type: 'application/pdf' }),
+      '99999999-9999-4999-8999-999999999999:document.preprocess:',
+    );
+  });
+
   it('validates nested progress payload contract object type', async () => {
     await expect(
       service.publishAiTaskNew({

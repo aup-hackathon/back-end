@@ -28,6 +28,7 @@ export default () => ({
   },
   health: {
     fastapi: process.env.FASTAPI_HEALTH_URL,
+    fastapiInternal: process.env.FASTAPI_INTERNAL_URL,
     elsa: process.env.ELSA_HEALTH_URL,
   },
   corsOrigin: process.env.CORS_ORIGIN,

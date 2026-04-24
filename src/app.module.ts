@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { LoggerModule } from 'nestjs-pino';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 import configuration from './core/config/configuration';
 import { envSchema } from './core/config/env.validation';
 import { CoreModule } from './core/core.module';
+import { JwtAuthGuard } from './core/guards/jwt-auth.guard';
+import { RolesGuard } from './core/guards/roles.guard';
+import { LoggerModule } from './core/logger/logger.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
@@ -18,17 +20,7 @@ import { HealthModule } from './modules/health/health.module';
       load: [configuration],
       validationSchema: envSchema,
     }),
-    LoggerModule.forRoot({
-      pinoHttp: {
-        redact: [
-          'req.headers.authorization',
-          'req.headers.cookie',
-          '*.password',
-          '*.password_hash',
-          '*.token',
-        ],
-      },
-    }),
+    LoggerModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
@@ -44,15 +36,25 @@ import { HealthModule } from './modules/health/health.module';
         type: 'postgres',
         url: config.getOrThrow<string>('database.url'),
         synchronize: false,
-        migrationsRun: false,
+        migrationsRun: true,
         entities: [__dirname + '/modules/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
-        autoLoadEntities: false,
+        autoLoadEntities: true,
         namingStrategy: new SnakeNamingStrategy(),
       }),
     }),
     CoreModule,
     HealthModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
   ],
 })
 export class AppModule {}

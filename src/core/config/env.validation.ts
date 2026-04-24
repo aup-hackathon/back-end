@@ -1,8 +1,8 @@
 import * as Joi from 'joi';
 
 export const envSchema = Joi.object({
-  NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
-  PORT: Joi.number().default(3000),
+  NODE_ENV: Joi.string().valid('development', 'test', 'production').required(),
+  PORT: Joi.number().required(),
   DATABASE_URL: Joi.string().uri().required(),
   NATS_URL: Joi.string().uri().required(),
   NATS_STREAM_NAME: Joi.string().default('FLOWFORGE'),
@@ -19,6 +19,7 @@ export const envSchema = Joi.object({
   MINIO_BUCKET_EXPORTS: Joi.string().default('exports'),
   OLLAMA_URL: Joi.string().uri().required(),
   FASTAPI_HEALTH_URL: Joi.string().uri().required(),
+  FASTAPI_INTERNAL_URL: Joi.string().uri().required(),
   ELSA_HEALTH_URL: Joi.string().uri().required(),
   CORS_ORIGIN: Joi.string().default('http://localhost:3001'),
   DEV_BYPASS_AUTH: Joi.boolean().default(false),

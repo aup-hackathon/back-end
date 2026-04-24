@@ -185,6 +185,7 @@ services:
       MINIO_BUCKET_EXPORTS: ${MINIO_BUCKET_EXPORTS:-exports}
       OLLAMA_URL: http://ollama:11434
       FASTAPI_HEALTH_URL: http://fastapi:8000/health
+      FASTAPI_INTERNAL_URL: http://fastapi:8000/internal
       ELSA_HEALTH_URL: http://elsa-server:8080/health
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
       DEV_BYPASS_AUTH: ${DEV_BYPASS_AUTH:-false}

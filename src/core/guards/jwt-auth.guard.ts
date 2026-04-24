@@ -2,10 +2,14 @@ import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { RequestContextService } from '../context/request-context.service';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt-access') implements CanActivate {
-  constructor(private reflector: Reflector) {
+  constructor(
+    private reflector: Reflector,
+    private readonly requestContext: RequestContextService,
+  ) {
     super();
   }
 
@@ -25,6 +29,11 @@ export class JwtAuthGuard extends AuthGuard('jwt-access') implements CanActivate
         role: 'admin',
         orgId: '00000000-0000-0000-0000-00000000a000',
       };
+      this.requestContext.setContext({
+        userId: request.user.id,
+        role: request.user.role,
+        orgId: request.user.orgId,
+      });
       return true;
     }
 

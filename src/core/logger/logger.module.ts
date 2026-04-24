@@ -12,7 +12,13 @@ import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
           '*.password',
           '*.password_hash',
           '*.token',
+          '*.refresh_token',
+          '*.access_token',
+          '*.secret',
         ],
+        customProps: (req) => ({
+          correlationId: req.headers['x-correlation-id'],
+        }),
         transport:
           process.env.NODE_ENV !== 'production'
             ? { target: 'pino-pretty', options: { colorize: true } }

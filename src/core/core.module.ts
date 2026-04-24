@@ -1,10 +1,9 @@
-import { Module } from '@nestjs/common';
-import { LoggerModule } from './logger/logger.module';
+import { Global, Module } from '@nestjs/common';
 import { RequestContextService } from './context/request-context.service';
 
+@Global()
 @Module({
-  imports: [LoggerModule],
   providers: [RequestContextService],
-  exports: [LoggerModule, RequestContextService],
+  exports: [RequestContextService],
 })
 export class CoreModule {}

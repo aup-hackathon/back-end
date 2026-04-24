@@ -10,14 +10,19 @@ export interface RequestContext {
 
 @Injectable()
 export class RequestContextService {
-  private readonly als = new AsyncLocalStorage<RequestContext>();
+  private static readonly als = new AsyncLocalStorage<RequestContext>();
 
-  run(context: RequestContext, callback: () => void) {
-    this.als.run(context, callback);
+  run<T>(context: RequestContext, callback: () => T): T {
+    return RequestContextService.als.run(context, callback);
   }
 
   getStore(): RequestContext | undefined {
-    return this.als.getStore();
+    return RequestContextService.als.getStore();
+  }
+
+  setContext(patch: Partial<RequestContext>): void {
+    const store = this.getStore();
+    if (store) Object.assign(store, patch);
   }
 
   getCorrelationId(): string {

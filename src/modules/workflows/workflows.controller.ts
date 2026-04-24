@@ -12,11 +12,16 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  ForbiddenException,
+  NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 
 import { WorkflowsService } from './workflows.service';
+import { WorkflowExportService } from './services/workflow-export.service';
 import {
   CreateWorkflowDto,
   UpdateWorkflowDto,
@@ -26,6 +31,7 @@ import {
   CreateVersionDto,
   UpdateWorkflowWithVersionInput,
 } from './dto/workflow.dto';
+import { ExportWorkflowDto, ExportFormat } from './dto/export-workflow.dto';
 
 interface AuthenticatedRequest extends Request {
   user: { id: string; orgId: string; role: string };
@@ -34,7 +40,10 @@ interface AuthenticatedRequest extends Request {
 @Controller('workflows')
 @UseGuards(AuthGuard('jwt'))
 export class WorkflowsController {
-  constructor(private readonly workflowsService: WorkflowsService) {}
+  constructor(
+    private readonly workflowsService: WorkflowsService,
+    private readonly workflowExportService: WorkflowExportService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -163,5 +172,131 @@ export class WorkflowsController {
   @Get(':id/decision-log')
   async getDecisionLog(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthenticatedRequest) {
     return { message: 'Delegate to BE-14 AuditModule', workflowId: id };
+  }
+
+  @Post(':id/export/elsa')
+  @HttpCode(HttpStatus.OK)
+  async exportToElsa(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const validation = await this.workflowExportService.validateExportability(
+      id,
+      req.user.orgId,
+      req.user.id,
+      req.user.role,
+    );
+
+    if (!validation.canExport) {
+      if (validation.reason === 'RECONCILIATION_REQUIRED') {
+        throw new ConflictException({
+          code: 'RECONCILIATION_REQUIRED',
+          unresolved_critical_points: validation.unresolvedCriticalPoints,
+        });
+      }
+      if (validation.reason === 'FORBIDDEN') {
+        throw new ForbiddenException({ code: 'FORBIDDEN' });
+      }
+      if (validation.reason === 'INVALID_STATUS') {
+        throw new ConflictException({ code: 'INVALID_STATUS' });
+      }
+      throw new NotFoundException({ code: 'WORKFLOW_NOT_FOUND' });
+    }
+
+    const workflow = await this.workflowsService.findOneWithLatestVersion(id, req.user.orgId);
+    const versionNumber = workflow.currentVersion;
+
+    const { json, filename } = await this.workflowExportService.exportToElsa(
+      id,
+      versionNumber,
+      req.user.id,
+      req.user.orgId,
+    );
+
+    return { json, filename };
+  }
+
+  @Post(':id/export/bpmn')
+  @HttpCode(HttpStatus.ACCEPTED)
+  async exportToBpmn(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const validation = await this.workflowExportService.validateExportability(
+      id,
+      req.user.orgId,
+      req.user.id,
+      req.user.role,
+    );
+
+    if (!validation.canExport) {
+      if (validation.reason === 'RECONCILIATION_REQUIRED') {
+        throw new ConflictException({
+          code: 'RECONCILIATION_REQUIRED',
+          unresolved_critical_points: validation.unresolvedCriticalPoints,
+        });
+      }
+      if (validation.reason === 'FORBIDDEN') {
+        throw new ForbiddenException({ code: 'FORBIDDEN' });
+      }
+      if (validation.reason === 'INVALID_STATUS') {
+        throw new ConflictException({ code: 'INVALID_STATUS' });
+      }
+      throw new NotFoundException({ code: 'WORKFLOW_NOT_FOUND' });
+    }
+
+    const correlationId = uuidv4();
+    const workflow = await this.workflowsService.findOneWithLatestVersion(id, req.user.orgId);
+    const versionNumber = workflow.currentVersion;
+
+    return this.workflowExportService.exportToBpmnAsync(
+      id,
+      versionNumber,
+      req.user.id,
+      req.user.orgId,
+      correlationId,
+    );
+  }
+
+  @Post(':id/export/pdf')
+  @HttpCode(HttpStatus.ACCEPTED)
+  async exportToPdf(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const validation = await this.workflowExportService.validateExportability(
+      id,
+      req.user.orgId,
+      req.user.id,
+      req.user.role,
+    );
+
+    if (!validation.canExport) {
+      if (validation.reason === 'RECONCILIATION_REQUIRED') {
+        throw new ConflictException({
+          code: 'RECONCILIATION_REQUIRED',
+          unresolved_critical_points: validation.unresolvedCriticalPoints,
+        });
+      }
+      if (validation.reason === 'FORBIDDEN') {
+        throw new ForbiddenException({ code: 'FORBIDDEN' });
+      }
+      if (validation.reason === 'INVALID_STATUS') {
+        throw new ConflictException({ code: 'INVALID_STATUS' });
+      }
+      throw new NotFoundException({ code: 'WORKFLOW_NOT_FOUND' });
+    }
+
+    const correlationId = uuidv4();
+    const workflow = await this.workflowsService.findOneWithLatestVersion(id, req.user.orgId);
+    const versionNumber = workflow.currentVersion;
+
+    return this.workflowExportService.exportToPdfAsync(
+      id,
+      versionNumber,
+      req.user.id,
+      req.user.orgId,
+      correlationId,
+    );
   }
 }

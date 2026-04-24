@@ -1,0 +1,28 @@
+import * as Joi from 'joi';
+
+export const envSchema = Joi.object({
+  NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
+  PORT: Joi.number().default(3000),
+  DATABASE_URL: Joi.string().uri().required(),
+  NATS_URL: Joi.string().uri().required(),
+  NATS_STREAM_NAME: Joi.string().default('FLOWFORGE'),
+  JWT_ACCESS_SECRET: Joi.string().min(32).required(),
+  JWT_REFRESH_SECRET: Joi.string().min(32).required(),
+  JWT_ACCESS_TTL: Joi.string().default('15m'),
+  JWT_REFRESH_TTL: Joi.string().default('7d'),
+  MINIO_ENDPOINT: Joi.string().required(),
+  MINIO_PORT: Joi.number().default(9000),
+  MINIO_USE_SSL: Joi.boolean().default(false),
+  MINIO_ACCESS_KEY: Joi.string().required(),
+  MINIO_SECRET_KEY: Joi.string().required(),
+  MINIO_BUCKET_DOCUMENTS: Joi.string().default('documents'),
+  MINIO_BUCKET_EXPORTS: Joi.string().default('exports'),
+  OLLAMA_URL: Joi.string().uri().required(),
+  FASTAPI_HEALTH_URL: Joi.string().uri().required(),
+  ELSA_HEALTH_URL: Joi.string().uri().required(),
+  CORS_ORIGIN: Joi.string().default('http://localhost:3001'),
+  DEV_BYPASS_AUTH: Joi.boolean().default(false),
+  THROTTLE_TTL: Joi.number().default(60),
+  THROTTLE_LIMIT: Joi.number().default(120),
+  LOG_LEVEL: Joi.string().valid('trace', 'debug', 'info', 'warn', 'error').default('info'),
+});

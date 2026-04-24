@@ -1,13 +1,16 @@
-import type { Config } from 'jest';
+import { JestConfig } from '@jest/types';
+import { pathsToModuleNameMapper } from 'ts-jest';
+import { compilerOptions } from './../tsconfig.json';
 
-const config: Config = {
+const config: JestConfig = {
   moduleFileExtensions: ['js', 'json', 'ts'],
-  rootDir: '..',
-  testRegex: 'test/.*\\.e2e-spec\\.ts$',
+  rootDir: '.',
+  testEnvironment: 'node',
+  testRegex: '.*\\.e2e-spec\\.ts$',
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
-  testEnvironment: 'node',
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/../' }),
 };
 
 export default config;

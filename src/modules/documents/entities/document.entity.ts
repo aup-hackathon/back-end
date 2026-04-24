@@ -20,6 +20,9 @@ export class Document {
   @Column({ type: 'text' })
   storageUrl: string;
 
+  @Column({ type: 'integer', default: 0 })
+  fileSizeBytes: number;
+
   @Column({ type: 'text', nullable: true })
   extractedText: string | null;
 
@@ -28,6 +31,9 @@ export class Document {
 
   @Column({ type: 'integer', default: 1 })
   docVersion: number;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  deletedAt: Date | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

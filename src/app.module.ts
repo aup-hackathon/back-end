@@ -10,6 +10,7 @@ import configuration from './core/config/configuration';
 import { envSchema } from './core/config/env.validation';
 import { CoreModule } from './core/core.module';
 import { HealthModule } from './modules/health/health.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { HealthModule } from './modules/health/health.module';
     }),
     CoreModule,
     HealthModule,
+    DocumentsModule,
   ],
 })
 export class AppModule {}

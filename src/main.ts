@@ -32,7 +32,7 @@ async function bootstrap() {
   );
 
   app.useGlobalFilters(new HttpExceptionFilter(logger));
-  app.useGlobalInterceptors(new CorrelationIdInterceptor(), new LoggingInterceptor());
+  app.useGlobalInterceptors(new CorrelationIdInterceptor(), new LoggingInterceptor(logger));
 
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()

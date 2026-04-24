@@ -1,6 +1,6 @@
-import { JestConfig } from '@jest/types';
+import type { Config } from 'jest';
 
-const config: JestConfig = {
+const config: Config = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
   testEnvironment: 'node',

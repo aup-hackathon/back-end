@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
-import { configuration } from './core/config/configuration';
+import configuration from './core/config/configuration';
 import { envSchema } from './core/config/env.validation';
 import { CoreModule } from './core/core.module';
 import { HealthModule } from './modules/health/health.module';
@@ -19,24 +20,34 @@ import { HealthModule } from './modules/health/health.module';
     }),
     LoggerModule.forRoot({
       pinoHttp: {
-        redact: ['req.headers.authorization', 'req.headers.cookie', '*.password', '*.password_hash', '*.token'],
+        redact: [
+          'req.headers.authorization',
+          'req.headers.cookie',
+          '*.password',
+          '*.password_hash',
+          '*.token',
+        ],
       },
     }),
     ThrottlerModule.forRootAsync({
-      inject: ['ConfigService'],
-      useFactory: (config: any) => ({
-        ttl: config.get('throttle.ttl'),
-        limit: config.get('throttle.limit'),
-      }),
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: config.getOrThrow<number>('throttle.ttl'),
+          limit: config.getOrThrow<number>('throttle.limit'),
+        },
+      ],
     }),
     TypeOrmModule.forRootAsync({
-      inject: ['ConfigService'],
-      useFactory: (config: any) => ({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        url: config.get('database.url'),
+        url: config.getOrThrow<string>('database.url'),
         synchronize: false,
-        migrationsRun: true,
-        autoLoadEntities: true,
+        migrationsRun: false,
+        entities: [__dirname + '/modules/**/*.entity{.ts,.js}'],
+        migrations: [__dirname + '/database/migrations/*{.ts,.js}'],
+        autoLoadEntities: false,
         namingStrategy: new SnakeNamingStrategy(),
       }),
     }),

@@ -152,7 +152,7 @@ services:
 
   nestjs:
     build:
-      context: ${NESTJS_CONTEXT:-.}
+      context: ${NESTJS_CONTEXT:-./backend}
       dockerfile: ${NESTJS_DOCKERFILE:-Dockerfile}
     container_name: flowforge-nestjs
     depends_on:
@@ -185,6 +185,7 @@ services:
       MINIO_BUCKET_EXPORTS: ${MINIO_BUCKET_EXPORTS:-exports}
       OLLAMA_URL: http://ollama:11434
       FASTAPI_HEALTH_URL: http://fastapi:8000/health
+      FASTAPI_INTERNAL_URL: http://fastapi:8000/internal
       ELSA_HEALTH_URL: http://elsa-server:8080/health
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
       DEV_BYPASS_AUTH: ${DEV_BYPASS_AUTH:-false}
@@ -202,7 +203,7 @@ services:
 
   fastapi:
     build:
-      context: ${FASTAPI_CONTEXT:-./infra/placeholders/fastapi}
+      context: ${FASTAPI_CONTEXT:-./ai-service}
     container_name: flowforge-fastapi
     depends_on:
       app-db:
@@ -230,7 +231,7 @@ services:
 
   nextjs:
     build:
-      context: ${NEXTJS_CONTEXT:-./infra/placeholders/nextjs}
+      context: ${NEXTJS_CONTEXT:-./frontend}
     container_name: flowforge-nextjs
     depends_on:
       nestjs:

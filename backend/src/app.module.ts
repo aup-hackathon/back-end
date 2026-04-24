@@ -16,6 +16,7 @@ import { HealthModule } from './modules/health/health.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
+import { WorkflowsModule } from './modules/workflows/workflows.module';
 import { NatsModule } from './nats/nats.module';
 
 @Module({
@@ -55,6 +56,7 @@ import { NatsModule } from './nats/nats.module';
     RealtimeModule,
     NatsModule,
     SessionsModule,
+    WorkflowsModule,
   ],
   providers: [
     {

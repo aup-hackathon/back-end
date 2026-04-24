@@ -14,6 +14,7 @@ import { LoggerModule } from './core/logger/logger.module';
 import { AIGatewayModule } from './modules/ai-gateway/ai-gateway.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { HealthModule } from './modules/health/health.module';
+import { MessagesModule } from './modules/messages/messages.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
@@ -53,6 +54,7 @@ import { NatsModule } from './nats/nats.module';
     CoreModule,
     HealthModule,
     DocumentsModule,
+    MessagesModule,
     OrganizationsModule,
     AIGatewayModule,
     RealtimeModule,

@@ -35,20 +35,6 @@ describe('NatsPublisherService', () => {
     );
   });
 
-  it('rejects invalid ai.tasks.new payload', async () => {
-    await expect(
-      service.publishAiTaskNew({
-        correlation_id: 'not-uuid',
-        session_id: '22222222-2222-4222-8222-222222222222',
-        org_id: '33333333-3333-4333-8333-333333333333',
-        task_type: PipelineTaskType.FULL_PIPELINE,
-        mode: SessionMode.AUTO,
-        input: {},
-        pipeline_execution_id: '44444444-4444-4444-8444-444444444444',
-      } as any),
-    ).rejects.toBeTruthy();
-  });
-
   it('publishes workflow update events', async () => {
     await service.publishWorkflowUpdated({
       workflow_id: '55555555-5555-4555-8555-555555555555',

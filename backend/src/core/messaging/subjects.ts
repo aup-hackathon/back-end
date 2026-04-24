@@ -28,3 +28,6 @@ export const STREAM_SUBJECTS = [
   'system.health.*',
   'dead.flowforge.>',
 ] as const;
+
+export type SubjectKey = keyof typeof SUBJECTS;
+export type ConsumerKey = keyof typeof CONSUMERS;

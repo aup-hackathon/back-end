@@ -4,7 +4,7 @@ import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
 import { JSONCodec, NatsConnection, connect } from 'nats';
 
-import { CONSUMERS, STREAM_SUBJECTS } from './contracts';
+import { CONSUMERS, STREAM_SUBJECTS } from '../core/messaging';
 
 type SubscriberMeta = {
   subject: string;

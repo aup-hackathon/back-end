@@ -28,6 +28,15 @@ export class User {
   @Column({ type: 'boolean', default: false })
   isVerified: boolean;
 
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  inviteTokenHash: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  inviteExpiresAt: Date | null;
+
   @Column({ type: 'timestamptz', nullable: true })
   lockedUntil: Date | null;
 

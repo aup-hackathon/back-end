@@ -12,6 +12,7 @@ import { JwtAuthGuard } from './core/guards/jwt-auth.guard';
 import { RolesGuard } from './core/guards/roles.guard';
 import { LoggerModule } from './core/logger/logger.module';
 import { HealthModule } from './modules/health/health.module';
+import { OrganizationsModule } from './modules/organizations/organizations.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { HealthModule } from './modules/health/health.module';
     }),
     CoreModule,
     HealthModule,
+    OrganizationsModule,
   ],
   providers: [
     {

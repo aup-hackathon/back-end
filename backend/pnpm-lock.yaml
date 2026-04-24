@@ -6,9 +6,7 @@ settings:
 
 importers:
 
-  .: {}
-
-  backend:
+  .:
     dependencies:
       '@nestjs/common':
         specifier: ^10.3.0

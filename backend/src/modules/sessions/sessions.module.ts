@@ -7,7 +7,8 @@ import { Document } from '../documents/entities/document.entity';
 import { Message } from '../messages/entities/message.entity';
 import { WorkflowVersion } from '../workflows/entities/workflow-version.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
-import { NatsPublisherService } from '../../nats/nats.publisher.service';
+import { AIGatewayModule } from '../ai-gateway/ai-gateway.module';
+import { NatsModule } from '../../nats/nats.module';
 import { Session } from './entities/session.entity';
 import { SessionOrgGuard } from './session-org.guard';
 import { SessionRealtimeEventsService } from './session-realtime-events.service';
@@ -16,6 +17,8 @@ import { SessionsService } from './sessions.service';
 
 @Module({
   imports: [
+    NatsModule,
+    AIGatewayModule,
     TypeOrmModule.forFeature([
       Session,
       Workflow,
@@ -27,7 +30,7 @@ import { SessionsService } from './sessions.service';
     ]),
   ],
   controllers: [SessionsController],
-  providers: [SessionsService, SessionOrgGuard, NatsPublisherService, SessionRealtimeEventsService],
+  providers: [SessionsService, SessionOrgGuard, SessionRealtimeEventsService],
   exports: [SessionsService],
 })
 export class SessionsModule {}

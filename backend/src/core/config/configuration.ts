@@ -7,6 +7,8 @@ export default () => ({
   nats: {
     url: process.env.NATS_URL,
     streamName: process.env.NATS_STREAM_NAME,
+    user: process.env.NATS_USER,
+    password: process.env.NATS_PASSWORD,
   },
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET,

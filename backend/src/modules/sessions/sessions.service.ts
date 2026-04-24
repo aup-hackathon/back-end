@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import { ActorType, PipelineStatus, SessionStatus, UserRole } from '../../database/enums';
 import { JsonValue } from '../../database/types/json-value.type';
 import { NatsPublisherService } from '../../nats/nats.publisher.service';
+import { AIGatewayService } from '../ai-gateway/ai-gateway.service';
 import { PipelineExecution } from '../agents/entities/pipeline-execution.entity';
 import { AuditLog } from '../audit/entities/audit-log.entity';
 import { Document } from '../documents/entities/document.entity';
@@ -47,6 +48,7 @@ export class SessionsService {
     @InjectRepository(AuditLog)
     private readonly auditLogsRepository: Repository<AuditLog>,
     private readonly natsPublisher: NatsPublisherService,
+    private readonly aiGatewayService: AIGatewayService,
     private readonly realtimeEvents: SessionRealtimeEventsService,
   ) {}
 
@@ -141,6 +143,56 @@ export class SessionsService {
       progress_pct: latestPipeline ? this.pipelineProgress(latestPipeline.status) : 0,
       overall_confidence: latestPipeline?.finalConfidence ?? session.confidenceScore,
     };
+  }
+
+  async dispatchAiTask(
+    sessionId: string,
+    input: Record<string, unknown>,
+    caller: RequestUser,
+    options?: {
+      taskType?: 'FULL_PIPELINE' | 'SCOPED_REPROCESS' | 'EXPORT_ONLY' | 'QA_ROUND';
+      resumeFromCheckpoint?:
+        | 'ORCHESTRATOR'
+        | 'INTAKE'
+        | 'EXTRACTION'
+        | 'PATTERN'
+        | 'GAP_DETECTION'
+        | 'QA'
+        | 'VALIDATION'
+        | 'EXPORT'
+        | 'DIVERGENCE'
+        | 'RULES_SKILLS_LOADER';
+    },
+  ) {
+    const session = await this.findSessionInOrgOrThrow(sessionId, caller.orgId);
+    this.assertOwnerOrAdmin(session, caller);
+
+    const taskType = options?.taskType ?? 'FULL_PIPELINE';
+    const result = await this.aiGatewayService.publishAiTask({
+      sessionId: session.id,
+      taskType: taskType as any,
+      mode: session.mode,
+      input,
+      triggeredBy: caller.id,
+      resumeFromCheckpoint: options?.resumeFromCheckpoint as any,
+    });
+
+    if (session.status === SessionStatus.CREATED) {
+      session.status = transitionSessionStatus(session.status, SessionFsmEvent.FIRST_USER_MESSAGE, session.mode);
+      session.status = transitionSessionStatus(session.status, SessionFsmEvent.AI_TASK_PUBLISHED, session.mode);
+      await this.sessionsRepository.save(session);
+    } else if (session.status === SessionStatus.AWAITING_INPUT || session.status === SessionStatus.IN_ELICITATION) {
+      session.status = transitionSessionStatus(session.status, SessionFsmEvent.AI_TASK_PUBLISHED, session.mode);
+      await this.sessionsRepository.save(session);
+    }
+
+    await this.insertAuditLog(session.workflowId, caller.id, 'AI_TASK_DISPATCHED', null, {
+      pipeline_execution_id: result.pipelineExecutionId,
+      task_type: taskType,
+      nats_message_id: result.natsMessageId,
+    });
+
+    return result;
   }
 
   async archive(sessionId: string, caller: RequestUser) {

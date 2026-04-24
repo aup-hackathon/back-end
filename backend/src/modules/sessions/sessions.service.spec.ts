@@ -67,6 +67,12 @@ describe('SessionsService', () => {
     const natsPublisher = {
       publishSessionFinalized: jest.fn().mockResolvedValue(undefined),
     };
+    const aiGatewayService = {
+      publishAiTask: jest.fn().mockResolvedValue({
+        pipelineExecutionId: 'pipeline-new',
+        natsMessageId: 'corr:ai.tasks.new:pipeline-new',
+      }),
+    };
     const realtimeEvents = {
       emitNeedsReconciliation: jest.fn(),
     };
@@ -80,6 +86,7 @@ describe('SessionsService', () => {
       documentsRepository as never,
       auditLogsRepository as never,
       natsPublisher as never,
+      aiGatewayService as never,
       realtimeEvents as never,
     );
 
@@ -93,6 +100,7 @@ describe('SessionsService', () => {
       documentsRepository,
       auditLogsRepository,
       natsPublisher,
+      aiGatewayService,
       realtimeEvents,
     };
   };
@@ -223,5 +231,24 @@ describe('SessionsService', () => {
     );
 
     expect(realtimeEvents.emitNeedsReconciliation).toHaveBeenCalledWith('session-1');
+  });
+
+  it('dispatches ai task and records audit event', async () => {
+    const { service, aiGatewayService, auditLogsRepository } = makeService();
+
+    const result = await service.dispatchAiTask(
+      'session-1',
+      { text: 'generate workflow' },
+      caller,
+      { taskType: 'FULL_PIPELINE' },
+    );
+
+    expect(result).toEqual(
+      expect.objectContaining({ pipelineExecutionId: 'pipeline-new' }),
+    );
+    expect(aiGatewayService.publishAiTask).toHaveBeenCalled();
+    expect(auditLogsRepository.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: 'AI_TASK_DISPATCHED' }),
+    );
   });
 });

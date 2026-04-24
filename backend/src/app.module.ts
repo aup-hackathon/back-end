@@ -11,9 +11,12 @@ import { CoreModule } from './core/core.module';
 import { JwtAuthGuard } from './core/guards/jwt-auth.guard';
 import { RolesGuard } from './core/guards/roles.guard';
 import { LoggerModule } from './core/logger/logger.module';
+import { AIGatewayModule } from './modules/ai-gateway/ai-gateway.module';
 import { HealthModule } from './modules/health/health.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
+import { NatsModule } from './nats/nats.module';
 
 @Module({
   imports: [
@@ -48,6 +51,9 @@ import { SessionsModule } from './modules/sessions/sessions.module';
     CoreModule,
     HealthModule,
     OrganizationsModule,
+    AIGatewayModule,
+    RealtimeModule,
+    NatsModule,
     SessionsModule,
   ],
   providers: [

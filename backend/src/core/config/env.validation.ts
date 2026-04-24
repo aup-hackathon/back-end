@@ -6,6 +6,8 @@ export const envSchema = Joi.object({
   DATABASE_URL: Joi.string().uri().required(),
   NATS_URL: Joi.string().uri().required(),
   NATS_STREAM_NAME: Joi.string().default('FLOWFORGE'),
+  NATS_USER: Joi.string().optional(),
+  NATS_PASSWORD: Joi.string().optional(),
   JWT_ACCESS_SECRET: Joi.string().min(32).required(),
   JWT_REFRESH_SECRET: Joi.string().min(32).required(),
   JWT_ACCESS_TTL: Joi.string().default('15m'),

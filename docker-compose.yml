@@ -152,7 +152,7 @@ services:
 
   nestjs:
     build:
-      context: ${NESTJS_CONTEXT:-.}
+      context: ${NESTJS_CONTEXT:-./backend}
       dockerfile: ${NESTJS_DOCKERFILE:-Dockerfile}
     container_name: flowforge-nestjs
     depends_on:
@@ -203,7 +203,7 @@ services:
 
   fastapi:
     build:
-      context: ${FASTAPI_CONTEXT:-./infra/placeholders/fastapi}
+      context: ${FASTAPI_CONTEXT:-./ai-service}
     container_name: flowforge-fastapi
     depends_on:
       app-db:
@@ -231,7 +231,7 @@ services:
 
   nextjs:
     build:
-      context: ${NEXTJS_CONTEXT:-./infra/placeholders/nextjs}
+      context: ${NEXTJS_CONTEXT:-./frontend}
     container_name: flowforge-nextjs
     depends_on:
       nestjs:

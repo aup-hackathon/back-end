@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CoreModule } from '../../core/core.module';
 import { NatsModule } from '../../nats/nats.module';
-import { AgentExecution, AgentLog, PipelineExecution } from '../agents/entities';
+import { AgentExecution, AgentLog, PipelineExecution, DeadLetter } from '../agents/entities';
 import { AuditLog } from '../audit/entities';
 import { DivergenceReport, WorkflowGraphSnapshot } from '../divergence/entities';
 import { Message } from '../messages/entities';
@@ -14,6 +14,8 @@ import { Skill } from '../skills/entities/skill.entity';
 import { KGEdge, KGNode, Workflow, WorkflowVersion } from '../workflows/entities';
 import { AIGatewayService } from './ai-gateway.service';
 import { AIGatewaySubscriberService } from './ai-gateway.subscriber.service';
+import { GenerationCompleteHandler, StreamTokenHandler, RetryExhaustedHandler, DivergenceResultHandler } from './handlers';
+import { AiTaskDlqService } from './dlq/ai-task-dlq.service';
 
 @Module({
   imports: [
@@ -35,9 +37,18 @@ import { AIGatewaySubscriberService } from './ai-gateway.subscriber.service';
       KGEdge,
       Rule,
       Skill,
+      DeadLetter,
     ]),
   ],
-  providers: [AIGatewayService, AIGatewaySubscriberService],
-  exports: [AIGatewayService, AIGatewaySubscriberService],
+  providers: [
+    AIGatewayService,
+    AIGatewaySubscriberService,
+    GenerationCompleteHandler,
+    StreamTokenHandler,
+    RetryExhaustedHandler,
+    DivergenceResultHandler,
+    AiTaskDlqService,
+  ],
+  exports: [AIGatewayService, AIGatewaySubscriberService, AiTaskDlqService],
 })
 export class AIGatewayModule {}

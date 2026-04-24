@@ -2,6 +2,45 @@
 
 NestJS gateway and local development infrastructure for FlowForge.
 
+## Current Backend Status
+
+Completed backend issues:
+
+- `BE-01`: database schema, TypeORM entities, migrations, `pgvector`, seed data for agent definitions and process patterns, and immutable audit trigger.
+- `BE-05`: organization user invites, role updates, access revocation, same-org guard, last-admin protection, invite token storage, and audit logging.
+- `BE-09`: session lifecycle API, FSM enforcement, workflow-scoped org isolation, mode switching, manual finalization, workflow state/progress endpoints, admin status override, soft archive cascade, audit logging, and `session.events.finalized` NATS publishing.
+- `BE-21`: Docker Compose local infrastructure for NestJS, FastAPI placeholder, Next.js placeholder, app Postgres, Elsa Postgres, NATS JetStream, MinIO, Ollama, and initialization scripts.
+- `BE-22`: NestJS bootstrap with global config validation, Pino logging, correlation IDs, global filters/interceptors/guards, Swagger, Terminus health, and `DEV_BYPASS_AUTH` for backend development before full auth lands.
+
+Current implemented API groups:
+
+- `GET /api/health/ping`
+- `POST /api/org/invite`
+- `PATCH /api/org/users/:id/role`
+- `DELETE /api/org/users/:id`
+- `POST /api/sessions`
+- `GET /api/sessions/:id`
+- `PATCH /api/sessions/:id/mode`
+- `POST /api/sessions/:id/finalize`
+- `GET /api/sessions/:id/workflow-state`
+- `GET /api/sessions/:id/progress`
+- `DELETE /api/sessions/:id`
+- `PATCH /api/sessions/:id/status`
+
+Important implementation notes:
+
+- Auth issues `BE-02`, `BE-03`, and `BE-04` are intentionally skipped for now. Use `DEV_BYPASS_AUTH=true` for local backend route smoke tests.
+- `session` rows do not have a direct `org_id`; BE-09 enforces org isolation through the linked `workflow.org_id`.
+- BE-09 includes a minimal NATS publisher only for `session.events.finalized`. The full NATS gateway/contracts work continues in `BE-10`.
+- The WebSocket event for `session.needs_reconciliation` is queued through a placeholder service until `BE-17` adds the real gateway.
+
+Verification baseline used so far:
+
+- `pnpm build`
+- `pnpm lint`
+- `pnpm test`
+- Runtime smoke tests against Dockerized `app-db`; BE-09 additionally verified against Dockerized NATS JetStream.
+
 ## Quick Start
 
 ```bash

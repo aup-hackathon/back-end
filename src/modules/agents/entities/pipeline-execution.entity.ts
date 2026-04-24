@@ -63,4 +63,7 @@ export class PipelineExecution {
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  archivedAt: Date | null;
 }

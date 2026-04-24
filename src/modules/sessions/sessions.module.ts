@@ -1,0 +1,33 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { PipelineExecution } from '../agents/entities/pipeline-execution.entity';
+import { AuditLog } from '../audit/entities/audit-log.entity';
+import { Document } from '../documents/entities/document.entity';
+import { Message } from '../messages/entities/message.entity';
+import { WorkflowVersion } from '../workflows/entities/workflow-version.entity';
+import { Workflow } from '../workflows/entities/workflow.entity';
+import { NatsPublisherService } from '../../nats/nats.publisher.service';
+import { Session } from './entities/session.entity';
+import { SessionOrgGuard } from './session-org.guard';
+import { SessionRealtimeEventsService } from './session-realtime-events.service';
+import { SessionsController } from './sessions.controller';
+import { SessionsService } from './sessions.service';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      Session,
+      Workflow,
+      WorkflowVersion,
+      PipelineExecution,
+      Message,
+      Document,
+      AuditLog,
+    ]),
+  ],
+  controllers: [SessionsController],
+  providers: [SessionsService, SessionOrgGuard, NatsPublisherService, SessionRealtimeEventsService],
+  exports: [SessionsService],
+})
+export class SessionsModule {}

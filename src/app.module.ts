@@ -13,6 +13,7 @@ import { RolesGuard } from './core/guards/roles.guard';
 import { LoggerModule } from './core/logger/logger.module';
 import { HealthModule } from './modules/health/health.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { SessionsModule } from './modules/sessions/sessions.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     CoreModule,
     HealthModule,
     OrganizationsModule,
+    SessionsModule,
   ],
   providers: [
     {

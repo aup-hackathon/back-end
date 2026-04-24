@@ -32,4 +32,7 @@ export class Session {
 
   @Column({ type: 'timestamptz', nullable: true })
   finalizedAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  archivedAt: Date | null;
 }

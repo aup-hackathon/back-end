@@ -31,4 +31,7 @@ export class Document {
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  archivedAt: Date | null;
 }

@@ -6,13 +6,14 @@ import { Repository } from 'typeorm';
 import { CONSUMERS, SUBJECTS } from '../../core/messaging';
 import { AiTaskResultEvent, AiTaskProgressEvent, PipelineDivergenceResultEvent, SystemHealthPingEvent } from '../../core/messaging/events';
 import { NatsClientService } from '../../infra/nats/nats.client';
+import { NatsPublisherService } from '../../infra/nats/nats.publisher.service';
 import { GenerationCompleteHandler } from './handlers/generation-complete.handler';
 import { StreamTokenHandler } from './handlers/stream-token.handler';
 import { RetryExhaustedHandler } from './handlers/retry-exhausted.handler';
 import { DivergenceResultHandler } from './handlers/divergence-result.handler';
 import { AiTaskDlqService } from './dlq/ai-task-dlq.service';
 import { AgentExecution, AgentLog, PipelineExecution } from '../agents/entities';
-import { AuditLog } from '../audit/entities';
+import { AuditService } from '../audit/audit.service';
 import { DivergenceReport, WorkflowGraphSnapshot } from '../divergence/entities';
 import { Message } from '../messages/entities';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -33,6 +34,8 @@ export class AIGatewaySubscriberService implements OnModuleInit {
     private readonly realtimeGateway: RealtimeGateway,
     private readonly configService: ConfigService,
     private readonly aiTaskDlqService: AiTaskDlqService,
+    private readonly natsPublisher: NatsPublisherService,
+    private readonly auditService: AuditService,
     @InjectRepository(Session)
     private readonly sessionsRepository: Repository<Session>,
     @InjectRepository(Workflow)
@@ -45,8 +48,6 @@ export class AIGatewaySubscriberService implements OnModuleInit {
     private readonly agentExecutionRepository: Repository<AgentExecution>,
     @InjectRepository(AgentLog)
     private readonly agentLogRepository: Repository<AgentLog>,
-    @InjectRepository(AuditLog)
-    private readonly auditLogRepository: Repository<AuditLog>,
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
     @InjectRepository(WorkflowGraphSnapshot)
@@ -65,14 +66,14 @@ export class AIGatewaySubscriberService implements OnModuleInit {
       pipelineExecutionsRepository,
       agentExecutionRepository,
       agentLogRepository,
-      auditLogRepository,
+      auditService,
       messageRepository,
       workflowGraphSnapshotRepository,
       divergenceReportRepository,
       kgNodeRepository,
       kgEdgeRepository,
       realtimeGateway,
-      natsPublisher: null as any,
+      natsPublisher,
     });
 
     this.streamTokenHandler = new StreamTokenHandler({

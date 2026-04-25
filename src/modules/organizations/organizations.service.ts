@@ -10,7 +10,7 @@ import { randomBytes, createHash } from 'crypto';
 import { Repository } from 'typeorm';
 
 import { ActorType, UserRole } from '../../database/enums';
-import { AuditLog } from '../audit/entities/audit-log.entity';
+import { AuditService } from '../audit/audit.service';
 import { RefreshToken } from '../auth/entities/refresh-token.entity';
 import { User } from '../auth/entities/user.entity';
 import { InviteUserDto } from './dto/invite-user.dto';
@@ -27,9 +27,8 @@ export class OrganizationsService {
     private readonly usersRepository: Repository<User>,
     @InjectRepository(RefreshToken)
     private readonly refreshTokensRepository: Repository<RefreshToken>,
-    @InjectRepository(AuditLog)
-    private readonly auditLogsRepository: Repository<AuditLog>,
     private readonly mailer: OrganizationMailerService,
+    private readonly auditService: AuditService,
   ) {}
 
   async inviteUser(dto: InviteUserDto, caller: RequestUser) {
@@ -56,7 +55,7 @@ export class OrganizationsService {
 
     const saved = await this.usersRepository.save(user);
     await this.mailer.sendInvite(email, inviteToken);
-    await this.auditLogsRepository.insert({
+    await this.auditService.log({
       actorId: caller.id,
       actorType: ActorType.USER,
       eventType: 'ORG_USER_INVITED',
@@ -93,7 +92,7 @@ export class OrganizationsService {
     user.role = dto.role;
     const saved = await this.usersRepository.save(user);
 
-    await this.auditLogsRepository.insert({
+    await this.auditService.log({
       actorId: caller.id,
       actorType: ActorType.USER,
       eventType: 'ORG_USER_ROLE_UPDATED',
@@ -115,7 +114,7 @@ export class OrganizationsService {
     user.isActive = false;
     await this.usersRepository.save(user);
     await this.refreshTokensRepository.update({ userId: user.id }, { revoked: true });
-    await this.auditLogsRepository.insert({
+    await this.auditService.log({
       actorId: caller.id,
       actorType: ActorType.USER,
       eventType: 'ORG_USER_REVOKED',

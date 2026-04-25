@@ -1,4 +1,12 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BeforeRemove,
+  BeforeSoftRemove,
+  BeforeUpdate,
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import { ActorType } from '../../../database/enums';
 import { JsonValue } from '../../../database/types/json-value.type';
@@ -31,4 +39,11 @@ export class AuditLog {
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
+
+  @BeforeUpdate()
+  @BeforeRemove()
+  @BeforeSoftRemove()
+  preventMutation(): never {
+    throw new Error('audit_log rows are immutable');
+  }
 }

@@ -10,7 +10,9 @@ type RequestWithContext = Request & {
 
 type ExceptionResponse = {
   error?: string;
-  message?: string | string[];
+  message?: unknown;
+  code?: string;
+  [key: string]: unknown;
 };
 
 @Catch()
@@ -77,12 +79,32 @@ export class HttpExceptionFilter extends BaseExceptionFilter implements Exceptio
     }
 
     const response = exceptionResponse as ExceptionResponse;
+    const error =
+      status === HttpStatus.BAD_REQUEST
+        ? 'ValidationError'
+        : (response.error ?? this.errorNameForStatus(status));
+
+    if (typeof response.message !== 'undefined') {
+      return {
+        error,
+        message: response.message,
+      };
+    }
+
+    const structuredPayload = Object.fromEntries(
+      Object.entries(response).filter(([key]) => key !== 'error'),
+    );
+
+    if (Object.keys(structuredPayload).length > 0) {
+      return {
+        error,
+        message: structuredPayload,
+      };
+    }
+
     return {
-      error:
-        status === HttpStatus.BAD_REQUEST
-          ? 'ValidationError'
-          : (response.error ?? this.errorNameForStatus(status)),
-      message: response.message ?? this.errorNameForStatus(status),
+      error,
+      message: this.errorNameForStatus(status),
     };
   }
 

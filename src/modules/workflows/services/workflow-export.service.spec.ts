@@ -9,9 +9,13 @@ import { Session } from '../../sessions/entities/session.entity';
 import { DivergenceReport } from '../../divergence/entities/divergence-report.entity';
 import { DivergencePoint } from '../../divergence/entities/divergence-point.entity';
 import { Message } from '../../messages/entities/message.entity';
-import { AuditLog } from '../../audit/entities/audit-log.entity';
+import { AuditService } from '../../audit/audit.service';
 import { PipelineExecution } from '../../agents/entities/pipeline-execution.entity';
-import { WorkflowStatus, SessionStatus } from '../../../database/enums';
+import {
+  DivergenceReportStatus,
+  WorkflowStatus,
+  SessionStatus,
+} from '../../../database/enums';
 import { WorkflowsService } from '../workflows.service';
 import { ElsaMappingService } from './elsa-mapping.service';
 import { WorkflowExportService } from './workflow-export.service';
@@ -25,7 +29,7 @@ describe('WorkflowExportService', () => {
   let divergenceReportRepo: jest.Mocked<Repository<DivergenceReport>>;
   let divergencePointRepo: jest.Mocked<Repository<DivergencePoint>>;
   let messageRepo: jest.Mocked<Repository<Message>>;
-  let auditLogRepo: jest.Mocked<Repository<AuditLog>>;
+  let auditService: { log: jest.Mock; listDecisionEntriesForWorkflow: jest.Mock };
   let pipelineExecutionRepo: jest.Mocked<Repository<PipelineExecution>>;
 
   const mockWorkflow: Partial<Workflow> = {
@@ -61,23 +65,23 @@ describe('WorkflowExportService', () => {
   const mockDivergenceReport: Partial<DivergenceReport> = {
     id: 'report-123',
     workflowId: 'workflow-123',
-    status: 'completed',
-  };
-
-  const mockCriticalUnresolvedPoint: Partial<DivergencePoint> = {
-    id: 'point-123',
-    reportId: 'report-123',
-    severity: 'CRITICAL',
-    resolved: false,
+    status: DivergenceReportStatus.COMPLETED,
   };
 
   beforeEach(async () => {
+    mockWorkflow.status = WorkflowStatus.VALIDATED;
+    mockSession.status = SessionStatus.VALIDATED;
+
     const mockWorkflowsService = {
       findOneWithLatestVersion: jest.fn().mockResolvedValue(mockWorkflow),
     };
 
     const mockNatsPublisher = {
       publish: jest.fn().mockResolvedValue(undefined),
+    };
+    const mockAuditService = {
+      log: jest.fn().mockResolvedValue({}),
+      listDecisionEntriesForWorkflow: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -86,14 +90,14 @@ describe('WorkflowExportService', () => {
         ElsaMappingService,
         { provide: WorkflowsService, useValue: mockWorkflowsService },
         { provide: NatsPublisherService, useValue: mockNatsPublisher },
+        { provide: AuditService, useValue: mockAuditService },
         { provide: getRepositoryToken(Workflow), useValue: { findOne: jest.fn(), update: jest.fn(), save: jest.fn() } },
         { provide: getRepositoryToken(WorkflowVersion), useValue: { findOne: jest.fn() } },
         { provide: getRepositoryToken(Session), useValue: { findOne: jest.fn(), findOneOrFail: jest.fn() } },
         { provide: getRepositoryToken(DivergenceReport), useValue: { findOne: jest.fn() } },
         { provide: getRepositoryToken(DivergencePoint), useValue: { count: jest.fn() } },
         { provide: getRepositoryToken(Message), useValue: { findOne: jest.fn() } },
-        { provide: getRepositoryToken(AuditLog), useValue: { save: jest.fn() } },
-        { provide: getRepositoryToken(PipelineExecution), useValue: { save: jest.fn() } },
+        { provide: getRepositoryToken(PipelineExecution), useValue: { create: jest.fn((value) => value), save: jest.fn() } },
       ],
     }).compile();
 
@@ -104,7 +108,7 @@ describe('WorkflowExportService', () => {
     divergenceReportRepo = module.get(getRepositoryToken(DivergenceReport));
     divergencePointRepo = module.get(getRepositoryToken(DivergencePoint));
     messageRepo = module.get(getRepositoryToken(Message));
-    auditLogRepo = module.get(getRepositoryToken(AuditLog));
+    auditService = module.get(AuditService);
     pipelineExecutionRepo = module.get(getRepositoryToken(PipelineExecution));
   });
 
@@ -130,8 +134,7 @@ describe('WorkflowExportService', () => {
     });
 
     it('should block export when session status is NEEDS_RECONCILIATION (409 Conflict with RECONCILIATION_REQUIRED)', async () => {
-      mockSession.status = SessionStatus.NEEDS_RECONCILIATION;
-      sessionRepo.findOne.mockResolvedValue(mockSession as Session);
+      sessionRepo.findOne.mockResolvedValue(mockSessionNeedsReconciliation as Session);
 
       const result = await service.validateExportability('workflow-123', 'org-123', 'user-123', 'admin');
 
@@ -186,13 +189,15 @@ describe('WorkflowExportService', () => {
       versionRepo.findOne.mockResolvedValue(mockVersion as WorkflowVersion);
       workflowRepo.findOne.mockResolvedValue(mockWorkflow as Workflow);
       workflowRepo.update.mockResolvedValue({ affected: 1 } as any);
-      auditLogRepo.save.mockResolvedValue({} as AuditLog);
 
       const result = await service.exportToElsa('workflow-123', 1, 'user-123', 'org-123');
 
       expect(result.json).toBeDefined();
       expect(result.filename).toContain('elsa');
       expect(result.artifactUri).toContain('exports/org-123/workflow-123');
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.objectContaining({ eventType: 'WORKFLOW_EXPORTED' }),
+      );
     });
 
     it('should throw NotFoundException when version not found', async () => {
@@ -203,11 +208,10 @@ describe('WorkflowExportService', () => {
   });
 
   describe('exportToBpmnAsync', () => {
-    it('should create pipeline execution and publish NATS message', async () => {
+    it('should create pipeline execution', async () => {
       pipelineExecutionRepo.save.mockResolvedValue({
         id: 'pipeline-123',
-      } as PipelineExecution);
-      const publishSpy = jest.spyOn(NatsPublisherService.prototype, 'publish' as any, 'value');
+      } as unknown as PipelineExecution);
 
       await service.exportToBpmnAsync('workflow-123', 1, 'user-123', 'org-123', 'corr-123');
 

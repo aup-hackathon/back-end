@@ -21,8 +21,8 @@ describe('OrganizationsService', () => {
     const refreshTokensRepository = {
       update: jest.fn().mockResolvedValue({ affected: 2 }),
     };
-    const auditLogsRepository = {
-      insert: jest.fn().mockResolvedValue({}),
+    const auditService = {
+      log: jest.fn().mockResolvedValue({}),
     };
     const mailer = {
       sendInvite: jest.fn().mockResolvedValue(undefined),
@@ -31,21 +31,21 @@ describe('OrganizationsService', () => {
     const service = new OrganizationsService(
       usersRepository as never,
       refreshTokensRepository as never,
-      auditLogsRepository as never,
       mailer as never,
+      auditService as never,
     );
 
     return {
       service,
       usersRepository,
       refreshTokensRepository,
-      auditLogsRepository,
+      auditService,
       mailer,
     };
   };
 
   it('creates pending invite users scoped to the caller organization', async () => {
-    const { service, usersRepository, auditLogsRepository, mailer } = makeService();
+    const { service, usersRepository, auditService, mailer } = makeService();
     usersRepository.findOne.mockResolvedValue(null);
 
     const result = await service.inviteUser(
@@ -65,7 +65,7 @@ describe('OrganizationsService', () => {
     expect(usersRepository.create.mock.calls[0][0].passwordHash).toMatch(/^pending-invite:/);
     expect(usersRepository.create.mock.calls[0][0].inviteTokenHash).toHaveLength(64);
     expect(mailer.sendInvite).toHaveBeenCalledWith('analyst@example.com', expect.any(String));
-    expect(auditLogsRepository.insert).toHaveBeenCalledWith(
+    expect(auditService.log).toHaveBeenCalledWith(
       expect.objectContaining({
         actorId: 'admin-1',
         actorType: ActorType.USER,
@@ -119,7 +119,7 @@ describe('OrganizationsService', () => {
   });
 
   it('updates same-org user roles and writes an audit log', async () => {
-    const { service, usersRepository, auditLogsRepository } = makeService();
+    const { service, usersRepository, auditService } = makeService();
     usersRepository.findOne.mockResolvedValue({
       id: 'user-2',
       email: 'user@example.com',
@@ -137,7 +137,7 @@ describe('OrganizationsService', () => {
     expect(usersRepository.save).toHaveBeenCalledWith(
       expect.objectContaining({ role: UserRole.REVIEWER }),
     );
-    expect(auditLogsRepository.insert).toHaveBeenCalledWith(
+    expect(auditService.log).toHaveBeenCalledWith(
       expect.objectContaining({
         actorId: 'admin-1',
         eventType: 'ORG_USER_ROLE_UPDATED',
@@ -149,7 +149,7 @@ describe('OrganizationsService', () => {
   });
 
   it('revokes same-org users, refresh tokens, and audit logs access removal', async () => {
-    const { service, usersRepository, refreshTokensRepository, auditLogsRepository } =
+    const { service, usersRepository, refreshTokensRepository, auditService } =
       makeService();
     usersRepository.findOne.mockResolvedValue({
       id: 'user-2',
@@ -164,7 +164,7 @@ describe('OrganizationsService', () => {
       { userId: 'user-2' },
       { revoked: true },
     );
-    expect(auditLogsRepository.insert).toHaveBeenCalledWith(
+    expect(auditService.log).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: 'ORG_USER_REVOKED',
         beforeState: { user_id: 'user-2', is_active: true },

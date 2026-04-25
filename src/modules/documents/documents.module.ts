@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AuditLog } from '@modules/audit/entities/audit-log.entity';
+import { AuditModule } from '@modules/audit/audit.module';
 import { RealtimeModule } from '@modules/realtime/realtime.module';
 import { Session } from '@modules/sessions/entities';
 import { Workflow } from '@modules/workflows/entities';
@@ -22,7 +22,8 @@ import {
   imports: [
     NatsModule,
     RealtimeModule,
-    TypeOrmModule.forFeature([Document, Session, Workflow, AuditLog]),
+    AuditModule,
+    TypeOrmModule.forFeature([Document, Session, Workflow]),
   ],
   controllers: [DocumentsController, WorkflowDocumentsController],
   providers: [

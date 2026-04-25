@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AuditModule } from '../audit/audit.module';
 import { Comment } from './entities/comment.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
-import { AuditLog } from '../audit/entities/audit-log.entity';
 import { User } from '../auth/entities/user.entity';
 import { Message } from '../messages/entities/message.entity';
 import { Session } from '../sessions/entities/session.entity';
@@ -15,8 +15,9 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Comment, Workflow, AuditLog, User, Message, Session, PipelineExecution]),
+    TypeOrmModule.forFeature([Comment, Workflow, User, Message, Session, PipelineExecution]),
     NatsModule,
+    AuditModule,
   ],
   controllers: [
     CommentsController,

@@ -4,11 +4,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CoreModule } from '../../core/core.module';
 import { NatsModule } from '../../infra/nats/nats.module';
 import { AgentExecution, AgentLog, PipelineExecution, DeadLetter } from '../agents/entities';
-import { AuditLog } from '../audit/entities';
+import { AuditModule } from '../audit/audit.module';
 import { DivergenceReport, WorkflowGraphSnapshot } from '../divergence/entities';
 import { Message } from '../messages/entities';
 import { RealtimeModule } from '../realtime/realtime.module';
-import { Rule } from '../rules/entities/rule.entity';
+import { RulesModule } from '../rules/rules.module';
 import { Session } from '../sessions/entities/session.entity';
 import { Skill } from '../skills/entities/skill.entity';
 import { KGEdge, KGNode, Workflow, WorkflowVersion } from '../workflows/entities';
@@ -22,6 +22,8 @@ import { AiTaskDlqService } from './dlq/ai-task-dlq.service';
     CoreModule,
     NatsModule,
     RealtimeModule,
+    AuditModule,
+    RulesModule,
     TypeOrmModule.forFeature([
       Session,
       Workflow,
@@ -30,12 +32,10 @@ import { AiTaskDlqService } from './dlq/ai-task-dlq.service';
       AgentExecution,
       AgentLog,
       Message,
-      AuditLog,
       WorkflowGraphSnapshot,
       DivergenceReport,
       KGNode,
       KGEdge,
-      Rule,
       Skill,
       DeadLetter,
     ]),

@@ -5,7 +5,6 @@ import { DataSource, Repository } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 import { WorkflowStatus, SessionMode, SessionStatus } from '../../../database/enums';
-import { AuditLog } from '../../audit/entities/audit-log.entity';
 import { Session } from '../../sessions/entities/session.entity';
 import { Workflow } from '../../workflows/entities/workflow.entity';
 import { Document } from '../entities/document.entity';
@@ -21,7 +20,6 @@ describe('DocumentsService integration', () => {
   let documentRepository: Repository<Document>;
   let sessionRepository: Repository<Session>;
   let workflowRepository: Repository<Workflow>;
-  let auditLogRepository: Repository<AuditLog>;
 
   const documentStorageService = {
     storeDocument: jest.fn(async ({ objectKey }: { objectKey: string }) => ({
@@ -33,6 +31,9 @@ describe('DocumentsService integration', () => {
 
   const natsPublisher = {
     publishDocumentPreprocess: jest.fn(async () => undefined),
+  };
+  const auditService = {
+    log: jest.fn(async () => undefined),
   };
 
   const realtimeGateway = {
@@ -70,13 +71,12 @@ describe('DocumentsService integration', () => {
 
     dataSource = await db.adapters.createTypeormDataSource({
       type: 'postgres',
-      entities: [AuditLog, Document, Session, Workflow],
+      entities: [Document, Session, Workflow],
       namingStrategy: new SnakeNamingStrategy(),
       synchronize: true,
     });
     await dataSource.initialize();
 
-    auditLogRepository = dataSource.getRepository(AuditLog);
     documentRepository = dataSource.getRepository(Document);
     sessionRepository = dataSource.getRepository(Session);
     workflowRepository = dataSource.getRepository(Workflow);
@@ -84,7 +84,6 @@ describe('DocumentsService integration', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    await auditLogRepository.clear();
     await documentRepository.clear();
     await sessionRepository.clear();
     await workflowRepository.clear();
@@ -128,9 +127,9 @@ describe('DocumentsService integration', () => {
       documentRepository,
       sessionRepository,
       workflowRepository,
-      auditLogRepository,
       documentStorageService as never,
       natsPublisher as never,
+      auditService as never,
     );
     const subscriber = new DocumentPreprocessSubscriberService(
       documentRepository,

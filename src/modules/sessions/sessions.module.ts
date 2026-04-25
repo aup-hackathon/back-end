@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { PipelineExecution } from '../agents/entities/pipeline-execution.entity';
-import { AuditLog } from '../audit/entities/audit-log.entity';
+import { AuditModule } from '../audit/audit.module';
 import { Document } from '../documents/entities/document.entity';
 import { Message } from '../messages/entities/message.entity';
 import { WorkflowVersion } from '../workflows/entities/workflow-version.entity';
@@ -19,6 +19,7 @@ import { SessionsService } from './sessions.service';
   imports: [
     NatsModule,
     AIGatewayModule,
+    AuditModule,
     TypeOrmModule.forFeature([
       Session,
       Workflow,
@@ -26,7 +27,6 @@ import { SessionsService } from './sessions.service';
       PipelineExecution,
       Message,
       Document,
-      AuditLog,
     ]),
   ],
   controllers: [SessionsController],

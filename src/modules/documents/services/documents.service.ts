@@ -8,8 +8,7 @@ import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ActorType } from '@database/enums';
-import { JsonValue } from '@database/types/json-value.type';
-import { AuditLog } from '@modules/audit/entities/audit-log.entity';
+import { AuditService } from '@modules/audit/audit.service';
 import { Session } from '@modules/sessions/entities';
 import { Workflow } from '@modules/workflows/entities';
 import { NatsPublisherService } from '../../../infra/nats/nats.publisher.service';
@@ -44,10 +43,9 @@ export class DocumentsService {
     private readonly sessionRepository: Repository<Session>,
     @InjectRepository(Workflow)
     private readonly workflowRepository: Repository<Workflow>,
-    @InjectRepository(AuditLog)
-    private readonly auditLogRepository: Repository<AuditLog>,
     private readonly documentStorageService: DocumentStorageService,
     private readonly natsPublisher: NatsPublisherService,
+    private readonly auditService: AuditService,
   ) { }
 
   async uploadDocument(
@@ -186,7 +184,7 @@ export class DocumentsService {
 
     document.extractedText = dto.extractedText;
     const savedDocument = await this.documentRepository.save(document);
-    await this.auditLogRepository.insert({
+    await this.auditService.log({
       workflowId: savedDocument.workflowId,
       actorId: currentUser.id,
       actorType: ActorType.USER,

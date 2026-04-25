@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PipelineExecution } from '../../agents/entities/pipeline-execution.entity';
-import { AuditLog } from '../../audit/entities/audit-log.entity';
+import { AuditService } from '../../audit/audit.service';
 import { Workflow } from '../entities/workflow.entity';
 import { WorkflowVersion } from '../entities/workflow-version.entity';
 import { Session } from '../../sessions/entities/session.entity';
@@ -30,13 +30,12 @@ export class WorkflowExportService {
     private readonly divergencePointRepo: Repository<DivergencePoint>,
     @InjectRepository(Message)
     private readonly messageRepo: Repository<Message>,
-    @InjectRepository(AuditLog)
-    private readonly auditLogRepo: Repository<AuditLog>,
     @InjectRepository(PipelineExecution)
     private readonly pipelineExecutionRepo: Repository<PipelineExecution>,
     @Inject(forwardRef(() => WorkflowsService))
     private readonly workflowsService: WorkflowsService,
     private readonly elsaMappingService: ElsaMappingService,
+    private readonly auditService: AuditService,
   ) {}
 
   /**
@@ -234,13 +233,9 @@ export class WorkflowExportService {
    * Get decision log for PDF export
    */
   async getDecisionLog(workflowId: string): Promise<Array<{ actor: string; action: string; timestamp: Date }>> {
-    const auditLogs = await this.auditLogRepo.find({
-      where: { workflowId },
-      order: { createdAt: 'DESC' },
-      take: 50,
-    });
+    const auditLogs = await this.auditService.listDecisionEntriesForWorkflow(workflowId);
 
-    return auditLogs.map((log) => ({
+    return auditLogs.slice(0, 50).map((log) => ({
       actor: log.actorType,
       action: log.eventType,
       timestamp: log.createdAt,
@@ -264,7 +259,7 @@ export class WorkflowExportService {
     beforeState: JsonValue,
     afterState: JsonValue,
   ): Promise<void> {
-    await this.auditLogRepo.save({
+    await this.auditService.log({
       workflowId,
       actorId,
       actorType: ActorType.USER,

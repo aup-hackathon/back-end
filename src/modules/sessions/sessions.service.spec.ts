@@ -61,8 +61,8 @@ describe('SessionsService', () => {
     const documentsRepository = {
       update: jest.fn().mockResolvedValue({ affected: 1 }),
     };
-    const auditLogsRepository = {
-      insert: jest.fn().mockResolvedValue({}),
+    const auditService = {
+      log: jest.fn().mockResolvedValue({}),
     };
     const natsPublisher = {
       publishSessionFinalized: jest.fn().mockResolvedValue(undefined),
@@ -84,10 +84,10 @@ describe('SessionsService', () => {
       pipelineExecutionsRepository as never,
       messagesRepository as never,
       documentsRepository as never,
-      auditLogsRepository as never,
       natsPublisher as never,
       aiGatewayService as never,
       realtimeEvents as never,
+      auditService as never,
     );
 
     return {
@@ -98,7 +98,7 @@ describe('SessionsService', () => {
       pipelineExecutionsRepository,
       messagesRepository,
       documentsRepository,
-      auditLogsRepository,
+      auditService,
       natsPublisher,
       aiGatewayService,
       realtimeEvents,
@@ -127,7 +127,7 @@ describe('SessionsService', () => {
   });
 
   it('mode switch requires owner or admin and writes audit', async () => {
-    const { service, auditLogsRepository } = makeService();
+    const { service, auditService } = makeService();
 
     const result = await service.updateMode(
       'session-1',
@@ -136,7 +136,7 @@ describe('SessionsService', () => {
     );
 
     expect(result.mode).toBe(SessionMode.AUTO);
-    expect(auditLogsRepository.insert).toHaveBeenCalledWith(
+    expect(auditService.log).toHaveBeenCalledWith(
       expect.objectContaining({
         actorType: ActorType.USER,
         eventType: 'SESSION_MODE_UPDATED',
@@ -159,7 +159,7 @@ describe('SessionsService', () => {
   });
 
   it('finalizes sessions and publishes the session finalized event', async () => {
-    const { service, sessionsRepository, natsPublisher, auditLogsRepository } = makeService();
+    const { service, sessionsRepository, natsPublisher, auditService } = makeService();
 
     const result = await service.finalize('session-1', caller);
 
@@ -175,7 +175,7 @@ describe('SessionsService', () => {
         final_confidence: 0.72,
       }),
     );
-    expect(auditLogsRepository.insert).toHaveBeenCalledWith(
+    expect(auditService.log).toHaveBeenCalledWith(
       expect.objectContaining({ eventType: 'SESSION_FINALIZED' }),
     );
   });
@@ -186,7 +186,7 @@ describe('SessionsService', () => {
       messagesRepository,
       documentsRepository,
       pipelineExecutionsRepository,
-      auditLogsRepository,
+      auditService,
     } = makeService();
 
     const result = await service.archive('session-1', caller);
@@ -204,7 +204,7 @@ describe('SessionsService', () => {
       { sessionId: 'session-1' },
       { archivedAt: expect.any(Date) },
     );
-    expect(auditLogsRepository.insert).toHaveBeenCalledWith(
+    expect(auditService.log).toHaveBeenCalledWith(
       expect.objectContaining({ eventType: 'SESSION_ARCHIVED' }),
     );
   });
@@ -234,7 +234,7 @@ describe('SessionsService', () => {
   });
 
   it('dispatches ai task and records audit event', async () => {
-    const { service, aiGatewayService, auditLogsRepository } = makeService();
+    const { service, aiGatewayService, auditService } = makeService();
 
     const result = await service.dispatchAiTask(
       'session-1',
@@ -247,7 +247,7 @@ describe('SessionsService', () => {
       expect.objectContaining({ pipelineExecutionId: 'pipeline-new' }),
     );
     expect(aiGatewayService.publishAiTask).toHaveBeenCalled();
-    expect(auditLogsRepository.insert).toHaveBeenCalledWith(
+    expect(auditService.log).toHaveBeenCalledWith(
       expect.objectContaining({ eventType: 'AI_TASK_DISPATCHED' }),
     );
   });

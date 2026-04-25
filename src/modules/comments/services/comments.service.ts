@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CommentType, UserRole, PipelineTaskType, ActorType, MessageRole, MessageType, WorkflowStatus, PipelineStatus, SessionMode, SessionStatus } from '../../../database/enums';
 import { Comment } from '../entities/comment.entity';
 import { Workflow } from '../../workflows/entities/workflow.entity';
-import { AuditLog } from '../../audit/entities/audit-log.entity';
+import { AuditService } from '../../audit/audit.service';
 import { User } from '../../auth/entities/user.entity';
 import { Message } from '../../messages/entities/message.entity';
 import { Session } from '../../sessions/entities/session.entity';
@@ -32,8 +32,6 @@ export class CommentsService {
     private readonly commentRepository: Repository<Comment>,
     @InjectRepository(Workflow)
     private readonly workflowRepository: Repository<Workflow>,
-    @InjectRepository(AuditLog)
-    private readonly auditLogRepository: Repository<AuditLog>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(Message)
@@ -44,6 +42,7 @@ export class CommentsService {
     private readonly pipelineExecutionRepository: Repository<PipelineExecution>,
     private readonly natsPublisher: NatsPublisherService,
     private readonly realtimeGateway: RealtimeGateway,
+    private readonly auditService: AuditService,
   ) { }
 
   async createComment(
@@ -77,10 +76,9 @@ export class CommentsService {
     const savedComment = await this.commentRepository.save(comment);
 
     // Create audit log
-    await this.auditLogRepository.save({
+    await this.logUserAudit({
       workflowId,
       actorId: authorId,
-      actorType: ActorType.USER,
       eventType: 'COMMENT_CREATED',
       elementId: dto.element_id ?? null,
       afterState: { comment_id: savedComment.id, type: dto.type },
@@ -140,10 +138,9 @@ export class CommentsService {
     comment.content = dto.content;
     const savedComment = await this.commentRepository.save(comment);
 
-    await this.auditLogRepository.save({
+    await this.logUserAudit({
       workflowId: comment.workflowId,
       actorId: userId,
-      actorType: ActorType.USER,
       eventType: 'COMMENT_UPDATED',
       elementId: comment.elementId,
       beforeState: { content: oldContent },
@@ -169,10 +166,9 @@ export class CommentsService {
 
     await this.commentRepository.save(comment);
 
-    await this.auditLogRepository.save({
+    await this.logUserAudit({
       workflowId: comment.workflowId,
       actorId: userId,
-      actorType: ActorType.USER,
       eventType: 'COMMENT_DELETED',
       elementId: comment.elementId,
     });
@@ -203,10 +199,9 @@ export class CommentsService {
 
     const savedComment = await this.commentRepository.save(comment);
 
-    await this.auditLogRepository.save({
+    await this.logUserAudit({
       workflowId: parentComment.workflowId,
       actorId: authorId,
-      actorType: ActorType.USER,
       eventType: 'COMMENT_REPLY_CREATED',
       elementId: parentComment.elementId,
       beforeState: { parent_comment_id: parentComment.id },
@@ -236,10 +231,9 @@ export class CommentsService {
 
     const savedComment = await this.commentRepository.save(comment);
 
-    await this.auditLogRepository.save({
+    await this.logUserAudit({
       workflowId: comment.workflowId,
       actorId: userId,
-      actorType: ActorType.USER,
       eventType: 'COMMENT_RESOLVED',
       elementId: comment.elementId,
       beforeState: { resolved: false },
@@ -348,10 +342,9 @@ export class CommentsService {
     await this.messageRepository.save(systemMessage);
 
     // Audit log
-    await this.auditLogRepository.save({
+    await this.logUserAudit({
       workflowId: comment.workflowId,
       actorId: userId,
-      actorType: ActorType.USER,
       eventType: 'COMMENT_INJECTED_TO_AI',
       elementId: comment.elementId,
       afterState: {
@@ -390,10 +383,9 @@ export class CommentsService {
     const savedComment = await this.commentRepository.save(comment);
 
     // Audit log
-    await this.auditLogRepository.save({
+    await this.logUserAudit({
       workflowId: comment.workflowId,
       actorId: userId,
-      actorType: ActorType.USER,
       eventType: 'COMMENT_ASSIGNED',
       elementId: comment.elementId,
       beforeState: { assigned_to: null },
@@ -508,10 +500,9 @@ export class CommentsService {
     );
 
     // Audit log
-    await this.auditLogRepository.save({
+    await this.logUserAudit({
       workflowId,
       actorId: userId,
-      actorType: ActorType.USER,
       eventType: 'ELEMENT_APPROVED',
       elementId,
     });
@@ -573,10 +564,9 @@ export class CommentsService {
     );
 
     // Single audit log entry
-    await this.auditLogRepository.save({
+    await this.logUserAudit({
       workflowId,
       actorId: userId,
-      actorType: ActorType.USER,
       eventType: 'ELEMENTS_BULK_APPROVED',
       afterState: { element_ids: approvedIds },
     });
@@ -654,5 +644,24 @@ export class CommentsService {
     return (
       role === UserRole.BUSINESS_ANALYST || role === UserRole.PROCESS_OWNER || role === UserRole.ADMIN
     );
+  }
+
+  private logUserAudit(entry: {
+    workflowId: string;
+    actorId: string;
+    eventType: string;
+    elementId?: string | null;
+    beforeState?: Record<string, unknown> | null;
+    afterState?: Record<string, unknown> | null;
+  }) {
+    return this.auditService.log({
+      workflowId: entry.workflowId,
+      actorId: entry.actorId,
+      actorType: ActorType.USER,
+      eventType: entry.eventType,
+      elementId: entry.elementId ?? null,
+      beforeState: entry.beforeState ?? null,
+      afterState: entry.afterState ?? null,
+    });
   }
 }

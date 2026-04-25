@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CoreModule } from '../../core/core.module';
 import { NatsModule } from '../../infra/nats/nats.module';
-import { AuditLog } from '../audit/entities';
+import { AuditModule } from '../audit/audit.module';
 import { Session } from '../sessions/entities';
 import { Message } from '../messages/entities';
 import { DivergenceReport, DivergencePoint } from '../divergence/entities';
@@ -18,10 +18,10 @@ import { WorkflowExportService } from './services/workflow-export.service';
   imports: [
     CoreModule,
     NatsModule,
+    AuditModule,
     TypeOrmModule.forFeature([
       Workflow,
       WorkflowVersion,
-      AuditLog,
       Session,
       Message,
       DivergenceReport,

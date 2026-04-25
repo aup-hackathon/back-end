@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { AgentType, PipelineTaskType, PipelineStatus, SessionMode } from '../../database/enums';
 import { RequestContextService } from '../../core/context/request-context.service';
 import { PipelineExecution } from '../agents/entities/pipeline-execution.entity';
-import { Rule } from '../rules/entities/rule.entity';
+import { RulesService } from '../rules/rules.service';
 import { Skill } from '../skills/entities/skill.entity';
 import { Session } from '../sessions/entities/session.entity';
 import { NatsPublisherService } from '../../infra/nats/nats.publisher.service';
@@ -19,10 +19,9 @@ export class AIGatewayService {
     private readonly pipelineExecutionRepository: Repository<PipelineExecution>,
     @InjectRepository(Session)
     private readonly sessionRepository: Repository<Session>,
-    @InjectRepository(Rule)
-    private readonly ruleRepository: Repository<Rule>,
     @InjectRepository(Skill)
     private readonly skillRepository: Repository<Skill>,
+    private readonly rulesService: RulesService,
   ) { }
 
   async publishAiTask(params: {
@@ -62,11 +61,7 @@ export class AIGatewayService {
     });
     const savedExecution = await this.pipelineExecutionRepository.save(pipelineExecution);
 
-    const activeRules = await this.ruleRepository.find({
-      where: { orgId, isActive: true },
-      order: { priority: 'ASC', updatedAt: 'DESC' },
-      take: 50,
-    });
+    const activeRules = await this.rulesService.listActiveRulesForContext(orgId, session.id);
     const skillIds = await this.skillRepository.find({
       where: { orgId, isActive: true },
       order: { isMandatory: 'DESC', updatedAt: 'DESC' },
@@ -77,15 +72,7 @@ export class AIGatewayService {
       correlation_id: correlationId,
       session_id: session.id,
       org_id: orgId,
-      active_rules: activeRules.map((rule) => ({
-        id: rule.id,
-        rule_type: rule.ruleType,
-        scope: rule.scope,
-        target_agent: rule.targetAgent,
-        condition: rule.condition,
-        instruction: rule.instruction,
-        priority: rule.priority,
-      })),
+      active_rules: activeRules,
       skill_ids: skillIds.map((skill) => skill.id),
     });
 

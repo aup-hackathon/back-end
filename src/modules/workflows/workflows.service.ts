@@ -4,7 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
 import { WorkflowStatus, ActorType } from '../../database/enums';
-import { AuditLog } from '../audit/entities';
+import { AuditService } from '../audit/audit.service';
 import { NatsPublisherService } from '../../infra/nats/nats.publisher.service';
 import { Workflow, WorkflowVersion } from './entities';
 import {
@@ -23,10 +23,9 @@ export class WorkflowsService {
     private readonly workflowRepository: Repository<Workflow>,
     @InjectRepository(WorkflowVersion)
     private readonly workflowVersionRepository: Repository<WorkflowVersion>,
-    @InjectRepository(AuditLog)
-    private readonly auditLogRepository: Repository<AuditLog>,
     private readonly dataSource: DataSource,
     private readonly natsPublisher: NatsPublisherService,
+    private readonly auditService: AuditService,
   ) { }
 
   async create(dto: CreateWorkflowDto, orgId: string, ownerId: string): Promise<Workflow> {
@@ -55,7 +54,7 @@ export class WorkflowsService {
     saved.currentVersion = 1;
     await this.workflowRepository.save(saved);
 
-    await this.auditLogRepository.insert({
+    await this.auditService.log({
       workflowId: saved.id,
       actorId: ownerId,
       actorType: ActorType.USER,
@@ -192,7 +191,7 @@ export class WorkflowsService {
 
     const saved = await this.workflowRepository.save(workflow);
 
-    await this.auditLogRepository.insert({
+    await this.auditService.log({
       workflowId: id,
       actorId: callerId,
       actorType: ActorType.USER,
@@ -229,7 +228,7 @@ export class WorkflowsService {
     workflow.status = WorkflowStatus.ARCHIVED;
     const saved = await this.workflowRepository.save(workflow);
 
-    await this.auditLogRepository.insert({
+    await this.auditService.log({
       workflowId: id,
       actorId: callerId,
       actorType: ActorType.USER,

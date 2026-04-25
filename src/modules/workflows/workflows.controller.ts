@@ -15,11 +15,20 @@ import {
   ForbiddenException,
   NotFoundException,
   ConflictException,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Request } from 'express';
+import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Roles } from '../../core/decorators/roles.decorator';
+import { UserRole } from '../../database/enums';
+import { AuditService } from '../audit/audit.service';
+import { AuditLogExportQueryDto, AuditLogExportFormat } from '../audit/dto/audit-log-export-query.dto';
+import { AuditLogQueryDto } from '../audit/dto/audit-log-query.dto';
 import { WorkflowsService } from './workflows.service';
 import { WorkflowExportService } from './services/workflow-export.service';
 import {
@@ -43,6 +52,7 @@ export class WorkflowsController {
   constructor(
     private readonly workflowsService: WorkflowsService,
     private readonly workflowExportService: WorkflowExportService,
+    private readonly auditService: AuditService,
   ) {}
 
   @Post()
@@ -169,9 +179,57 @@ export class WorkflowsController {
     await this.workflowsService.archive(id, req.user.orgId, req.user.id, req.user.role);
   }
 
+  @Get(':id/audit-log')
+  @Roles(UserRole.ADMIN, UserRole.PROCESS_OWNER, UserRole.BUSINESS_ANALYST)
+  async getAuditLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: AuditLogQueryDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const result = await this.auditService.getWorkflowAuditLog(id, req.user, query);
+    return {
+      entries: result.entries,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
+  }
+
   @Get(':id/decision-log')
-  async getDecisionLog(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthenticatedRequest) {
-    return { message: 'Delegate to BE-14 AuditModule', workflowId: id };
+  @Roles(UserRole.ADMIN, UserRole.PROCESS_OWNER, UserRole.BUSINESS_ANALYST)
+  async getDecisionLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: AuditLogQueryDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const result = await this.auditService.getDecisionLog(id, req.user, query);
+    return {
+      entries: result.entries,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
+  }
+
+  @Post(':id/audit-log/export')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Roles(UserRole.ADMIN, UserRole.PROCESS_OWNER, UserRole.BUSINESS_ANALYST)
+  async exportAuditLog(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: AuditLogExportQueryDto,
+    @Req() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<StreamableFile> {
+    const exportFile = await this.auditService.exportWorkflowAuditLog(id, req.user, query);
+    response.setHeader('Content-Type', exportFile.contentType);
+    response.setHeader('Content-Disposition', `attachment; filename="${exportFile.filename}"`);
+
+    if (query.format === AuditLogExportFormat.CSV) {
+      response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    }
+
+    return new StreamableFile(exportFile.buffer);
   }
 
   @Post(':id/export/elsa')

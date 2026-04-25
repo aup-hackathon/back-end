@@ -14,7 +14,7 @@ import {
   WorkflowStatus,
 } from '../../../database/enums';
 import { AgentExecution, PipelineExecution } from '../../agents/entities';
-import { AuditLog } from '../../audit/entities';
+import { AuditService } from '../../audit/audit.service';
 import { DivergenceReport, WorkflowGraphSnapshot } from '../../divergence/entities';
 import { Message } from '../../messages/entities';
 import { RealtimeGateway } from '../../realtime/realtime.gateway';
@@ -31,7 +31,7 @@ export interface GenerationCompleteHandlerDeps {
   pipelineExecutionsRepository: Repository<PipelineExecution>;
   agentExecutionRepository: Repository<AgentExecution>;
   agentLogRepository: Repository<any>;
-  auditLogRepository: Repository<AuditLog>;
+  auditService: AuditService;
   messageRepository: Repository<Message>;
   workflowGraphSnapshotRepository: Repository<WorkflowGraphSnapshot>;
   divergenceReportRepository: Repository<DivergenceReport>;
@@ -56,7 +56,7 @@ export class GenerationCompleteHandler {
       workflowsRepository,
       workflowVersionsRepository,
       pipelineExecutionsRepository,
-      auditLogRepository,
+      auditService,
       messageRepository,
       workflowGraphSnapshotRepository,
       divergenceReportRepository,
@@ -115,7 +115,7 @@ export class GenerationCompleteHandler {
       archivedAt: null,
     });
 
-    await auditLogRepository.insert({
+    await auditService.log({
       workflowId: workflow.id,
       actorId: null,
       actorType: ActorType.AI_AGENT,

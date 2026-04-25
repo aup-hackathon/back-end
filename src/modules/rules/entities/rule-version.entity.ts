@@ -17,6 +17,12 @@ export class RuleVersion {
   @Column({ type: 'jsonb', nullable: true })
   condition: Record<string, unknown> | null;
 
+  @Column({ type: 'smallint', default: 100 })
+  priority: number;
+
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
+
   @Column({ type: 'uuid' })
   changedBy: string;
 

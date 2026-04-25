@@ -12,7 +12,7 @@ import { JsonValue } from '../../database/types/json-value.type';
 import { NatsPublisherService } from '../../infra/nats/nats.publisher.service';
 import { AIGatewayService } from '../ai-gateway/ai-gateway.service';
 import { PipelineExecution } from '../agents/entities/pipeline-execution.entity';
-import { AuditLog } from '../audit/entities/audit-log.entity';
+import { AuditService } from '../audit/audit.service';
 import { Document } from '../documents/entities/document.entity';
 import { Message } from '../messages/entities/message.entity';
 import { WorkflowVersion } from '../workflows/entities/workflow-version.entity';
@@ -45,11 +45,10 @@ export class SessionsService {
     private readonly messagesRepository: Repository<Message>,
     @InjectRepository(Document)
     private readonly documentsRepository: Repository<Document>,
-    @InjectRepository(AuditLog)
-    private readonly auditLogsRepository: Repository<AuditLog>,
     private readonly natsPublisher: NatsPublisherService,
     private readonly aiGatewayService: AIGatewayService,
     private readonly realtimeEvents: SessionRealtimeEventsService,
+    private readonly auditService: AuditService,
   ) { }
 
   async createSession(dto: CreateSessionDto, caller: RequestUser) {
@@ -308,7 +307,7 @@ export class SessionsService {
     beforeState: JsonValue | null,
     afterState: JsonValue | null,
   ) {
-    return this.auditLogsRepository.insert({
+    return this.auditService.log({
       workflowId,
       actorId,
       actorType: ActorType.USER,

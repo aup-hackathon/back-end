@@ -23,13 +23,13 @@ describe('AIGatewayService', () => {
     const sessionRepository = {
       findOne: jest.fn().mockResolvedValue({ id: 'session-1', workflowId: 'workflow-1', mode: SessionMode.AUTO }),
     };
-    const ruleRepository = {
-      find: jest.fn().mockResolvedValue([
+    const rulesService = {
+      listActiveRulesForContext: jest.fn().mockResolvedValue([
         {
           id: 'rule-1',
-          ruleType: 'EXTRACTION',
+          type: 'EXTRACTION',
           scope: 'ORG',
-          targetAgent: 'EXTRACTION',
+          target_agent: 'EXTRACTION',
           condition: { source: 'doc' },
           instruction: 'prefer process owner naming',
           priority: 10,
@@ -45,8 +45,8 @@ describe('AIGatewayService', () => {
       requestContextService,
       pipelineExecutionRepository as never,
       sessionRepository as never,
-      ruleRepository as never,
       skillRepository as never,
+      rulesService as never,
     );
 
     return {
@@ -54,7 +54,7 @@ describe('AIGatewayService', () => {
       natsPublisher,
       pipelineExecutionRepository,
       sessionRepository,
-      ruleRepository,
+      rulesService,
       skillRepository,
       requestContextService,
     };

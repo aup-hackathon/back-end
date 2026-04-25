@@ -18,7 +18,9 @@ import { HealthModule } from './modules/health/health.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { RulesModule } from './modules/rules/rules.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
+import { SkillsModule } from './modules/skills/skills.module';
 import { WorkflowsModule } from './modules/workflows/workflows.module';
 import { NatsModule } from './infra/nats/nats.module';
 
@@ -60,8 +62,10 @@ import { NatsModule } from './infra/nats/nats.module';
     AIGatewayModule,
     CommentsModule,
     RealtimeModule,
+    RulesModule,
     NatsModule,
     SessionsModule,
+    SkillsModule,
     WorkflowsModule,
   ],
   providers: [

@@ -51,15 +51,29 @@ async function bootstrap() {
     new LoggingInterceptor(logger),
   );
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.ENABLE_SWAGGER !== 'false') {
     const config = new DocumentBuilder()
       .setTitle('FlowForge API')
       .setDescription('The FlowForge REST API description')
       .setVersion('1.0')
       .addBearerAuth()
+      .addTag('health', 'Health check endpoints')
+      .addTag('skills', 'Skills management')
+      .addTag('rules', 'Rules management')
+      .addTag('workflows', 'Workflows management')
+      .addTag('sessions', 'Elicitation sessions')
+      .addTag('organizations', 'Organization management')
+      .addTag('messages', 'Messages')
+      .addTag('documents', 'Document management')
+      .addTag('comments', 'Comments')
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document);
+
+    // JSON endpoint for OpenAPI spec
+    app.getHttpAdapter().get('/docs-json', (req, res) => {
+      res.json(document);
+    });
   }
 
   app.enableShutdownHooks();

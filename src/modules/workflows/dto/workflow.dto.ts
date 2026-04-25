@@ -4,6 +4,9 @@ import { Type } from 'class-transformer';
 import { WorkflowStatus } from '../../../database/enums';
 
 export class CreateWorkflowDto {
+  @IsUUID()
+  projectId: string;
+
   @IsString()
   title: string;
 
@@ -67,6 +70,10 @@ export class WorkflowFilterDto {
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsUUID()
+  projectId?: string;
 
   @IsOptional()
   @IsString()

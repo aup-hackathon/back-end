@@ -99,35 +99,6 @@ services:
     entrypoint: ['sh', '/bootstrap.sh']
     restart: 'no'
 
-  # ollama:
-  #   image: ollama/ollama:latest
-  #   container_name: flowforge-ollama
-  #   ports:
-  #     - '${OLLAMA_PORT:-11434}:11434'
-  #   volumes:
-  #     - ollama-models:/root/.ollama
-  #   healthcheck:
-  #     test: ['CMD-SHELL', 'ollama list >/dev/null 2>&1 || exit 1']
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 20
-  #     start_period: 15s
-
-  # ollama-init:
-  #   image: ollama/ollama:latest
-  #   container_name: flowforge-ollama-init
-  #   depends_on:
-  #     ollama:
-  #       condition: service_healthy
-  #   environment:
-  #     OLLAMA_HOST: http://ollama:11434
-  #     OLLAMA_LLM_MODEL: ${OLLAMA_LLM_MODEL:-mistral:7b-instruct}
-  #     OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-nomic-embed-text}
-  #   volumes:
-  #     - ollama-models:/root/.ollama
-  #     - ./infra/ollama-pull.sh:/ollama-pull.sh:ro
-  #   entrypoint: ['sh', '/ollama-pull.sh']
-  #   restart: 'no'
 
   elsa-server:
     image: ${ELSA_SERVER_IMAGE:-elsaworkflows/elsa-server-v3-5:latest}
@@ -151,7 +122,7 @@ services:
 
   nestjs:
     build:
-      context: ${NESTJS_CONTEXT:-./backend}
+      context: ${NESTJS_CONTEXT:-.}
       dockerfile: ${NESTJS_DOCKERFILE:-Dockerfile}
     container_name: flowforge-nestjs
     depends_on:

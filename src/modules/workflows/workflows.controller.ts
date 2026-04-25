@@ -23,6 +23,7 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Request } from 'express';
 import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { Roles } from '../../core/decorators/roles.decorator';
 import { UserRole } from '../../database/enums';
@@ -46,6 +47,8 @@ interface AuthenticatedRequest extends Request {
   user: { id: string; orgId: string; role: string };
 }
 
+@ApiTags('workflows')
+@ApiBearerAuth()
 @Controller('workflows')
 @UseGuards(AuthGuard('jwt'))
 export class WorkflowsController {
@@ -57,12 +60,16 @@ export class WorkflowsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a new workflow' })
+  @ApiResponse({ status: 201, description: 'Workflow created' })
   async create(@Body() dto: CreateWorkflowDto, @Req() req: AuthenticatedRequest) {
     const workflow = await this.workflowsService.create(dto, req.user.orgId, req.user.id);
     return { workflow };
   }
 
   @Get()
+  @ApiOperation({ summary: 'List all workflows' })
+  @ApiResponse({ status: 200, description: 'Workflows list' })
   async findAll(@Query() filter: WorkflowFilterDto, @Req() req: AuthenticatedRequest) {
     const { workflows, total } = await this.workflowsService.findAll(filter, req.user.orgId);
     return {
@@ -74,12 +81,14 @@ export class WorkflowsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get workflow by ID' })
   async findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthenticatedRequest) {
     const workflow = await this.workflowsService.findOneWithLatestVersion(id, req.user.orgId);
     return { workflow };
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update workflow' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateWorkflowDto | UpdateWorkflowWithVersionDto,
@@ -97,6 +106,7 @@ export class WorkflowsController {
 
   @Post(':id/versions')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a new workflow version' })
   async createVersion(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateVersionDto,
@@ -117,12 +127,14 @@ export class WorkflowsController {
   }
 
   @Get(':id/versions')
+  @ApiOperation({ summary: 'Get all versions of a workflow' })
   async findVersions(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthenticatedRequest) {
     const versions = await this.workflowsService.findVersions(id, req.user.orgId);
     return { versions };
   }
 
   @Get(':id/versions/:versionNumber')
+  @ApiOperation({ summary: 'Get a specific workflow version' })
   async findVersion(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('versionNumber', ParseUUIDPipe) versionNumber: number,
@@ -133,6 +145,7 @@ export class WorkflowsController {
   }
 
   @Get(':id/diff/:v1/:v2')
+  @ApiOperation({ summary: 'Compute diff between two versions' })
   async computeDiff(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('v1') v1: string,
@@ -150,6 +163,7 @@ export class WorkflowsController {
 
   @Post(':id/duplicate')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Duplicate a workflow' })
   async duplicate(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: DuplicateWorkflowDto,
@@ -165,6 +179,7 @@ export class WorkflowsController {
   }
 
   @Get(':id/diagram-data')
+  @ApiOperation({ summary: 'Get workflow diagram data' })
   async getDiagramData(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthenticatedRequest) {
     const diagramData = await this.workflowsService.getDiagramData(id, req.user.orgId);
     return diagramData;
@@ -172,6 +187,7 @@ export class WorkflowsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Archive a workflow' })
   async archive(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req: AuthenticatedRequest,
@@ -181,6 +197,7 @@ export class WorkflowsController {
 
   @Get(':id/audit-log')
   @Roles(UserRole.ADMIN, UserRole.PROCESS_OWNER, UserRole.BUSINESS_ANALYST)
+  @ApiOperation({ summary: 'Get workflow audit log' })
   async getAuditLog(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: AuditLogQueryDto,

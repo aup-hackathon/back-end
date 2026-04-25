@@ -25,8 +25,9 @@
       "@core/*": ["src/core/*"],
       "@modules/*": ["src/modules/*"],
       "@database/*": ["src/database/*"],
-      "@nats/*": ["src/nats/*"]
+      "@nats/*": ["src/infra/nats/*"]
     }
   },
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules", "dist"]
 }

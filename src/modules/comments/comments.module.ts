@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AuditModule } from '../audit/audit.module';
+import { RealtimeModule } from '../realtime/realtime.module';
 import { Comment } from './entities/comment.entity';
 import { Workflow } from '../workflows/entities/workflow.entity';
 import { User } from '../auth/entities/user.entity';
@@ -11,13 +12,13 @@ import { PipelineExecution } from '../agents/entities/pipeline-execution.entity'
 import { CommentsService } from './services/comments.service';
 import { CommentsController, CommentOperationsController, CommentsAssignedController, ElementReviewController, ReviewProgressController } from './controllers/comments.controller';
 import { NatsModule } from '../../infra/nats/nats.module';
-import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Comment, Workflow, User, Message, Session, PipelineExecution]),
     NatsModule,
     AuditModule,
+    RealtimeModule,
   ],
   controllers: [
     CommentsController,
@@ -26,7 +27,7 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
     ElementReviewController,
     ReviewProgressController,
   ],
-  providers: [CommentsService, RealtimeGateway],
+  providers: [CommentsService],
   exports: [CommentsService],
 })
 export class CommentsModule { }

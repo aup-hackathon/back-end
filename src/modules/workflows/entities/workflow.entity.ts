@@ -36,6 +36,9 @@ export class Workflow {
   @Column({ type: 'uuid' })
   ownerId: string;
 
+  @Column({ type: 'uuid', nullable: true })
+  projectId: string | null;
+
   @Column({ type: 'text', nullable: true })
   domain: string | null;
 

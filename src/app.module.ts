@@ -17,6 +17,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
 import { HealthModule } from './modules/health/health.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { ProjectsModule } from './modules/projects/projects.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { RulesModule } from './modules/rules/rules.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
@@ -59,6 +60,7 @@ import { NatsModule } from './infra/nats/nats.module';
     DocumentsModule,
     MessagesModule,
     OrganizationsModule,
+    ProjectsModule,
     AIGatewayModule,
     CommentsModule,
     RealtimeModule,

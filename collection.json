@@ -1,0 +1,3173 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/api/health": {
+            "get": {
+                "operationId": "HealthController_check",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "health"
+                ]
+            }
+        },
+        "/api/health/details": {
+            "get": {
+                "operationId": "HealthController_checkDetails",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "health"
+                ]
+            }
+        },
+        "/api/health/ai-service": {
+            "get": {
+                "operationId": "HealthController_checkAiService",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "health"
+                ]
+            }
+        },
+        "/api/health/ollama": {
+            "get": {
+                "operationId": "HealthController_checkOllama",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "health"
+                ]
+            }
+        },
+        "/api/health/pgvector": {
+            "get": {
+                "operationId": "HealthController_checkPgVector",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "health"
+                ]
+            }
+        },
+        "/api/health/nats": {
+            "get": {
+                "operationId": "HealthController_checkNatsStats",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "health"
+                ]
+            }
+        },
+        "/api/health/ping": {
+            "get": {
+                "operationId": "HealthController_ping",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "health"
+                ]
+            }
+        },
+        "/api/documents/upload": {
+            "post": {
+                "operationId": "DocumentsController_uploadDocument",
+                "summary": "Upload a workflow document to MinIO.",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "sessionId",
+                                    "file"
+                                ],
+                                "properties": {
+                                    "sessionId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "workflowId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "documents"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/documents/{id}": {
+            "get": {
+                "operationId": "DocumentsController_getDocument",
+                "summary": "Get document metadata and a fresh presigned download URL.",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "documents"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "DocumentsController_deleteDocument",
+                "summary": "Soft-delete a document without removing the underlying MinIO object.",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "documents"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/documents/{id}/extracted-text": {
+            "get": {
+                "operationId": "DocumentsController_getExtractedText",
+                "summary": "Get the current extracted text for a document.",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentExtractedTextDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "documents"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "patch": {
+                "operationId": "DocumentsController_updateExtractedText",
+                "summary": "Update extracted text for a document and audit the change.",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateExtractedTextDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentExtractedTextDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "documents"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/documents/{id}/reprocess": {
+            "post": {
+                "operationId": "DocumentsController_reprocessDocument",
+                "summary": "Create a new document version and re-trigger preprocessing.",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "documents"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{workflowId}/documents": {
+            "get": {
+                "operationId": "WorkflowDocumentsController_listDocuments",
+                "summary": "List the active documents linked to a workflow.",
+                "parameters": [
+                    {
+                        "name": "workflowId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DocumentResponseDto"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "documents"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/messages/{id}": {
+            "get": {
+                "operationId": "MessagesController_getMessage",
+                "summary": "Fetch a single session message by ID.",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "messages"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/sessions/{sessionId}/messages": {
+            "post": {
+                "operationId": "SessionMessagesController_createMessage",
+                "summary": "Create an immutable message inside a session.",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateMessageDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponseDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "messages"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "get": {
+                "operationId": "SessionMessagesController_listMessages",
+                "summary": "List session messages in chronological order with cursor pagination.",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "enum": [
+                                "user_input",
+                                "ai_question",
+                                "ai_response",
+                                "ai_summary",
+                                "ai_update",
+                                "ai_confidence_report",
+                                "system_note",
+                                "system_status"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "required": false,
+                        "in": "query",
+                        "description": "Opaque pagination cursor returned by the previous page.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "required": false,
+                        "in": "query",
+                        "description": "Full-text search term applied to message content.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaginatedMessagesDto"
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "messages"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/sessions/{sessionId}/messages/export": {
+            "get": {
+                "operationId": "SessionMessagesController_exportMessages",
+                "summary": "Export the full session transcript as a readable PDF.",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "messages"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/org/invite": {
+            "post": {
+                "operationId": "OrganizationsController_invite",
+                "summary": "Invite a user to the caller organization",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InviteUserDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Pending user invitation created"
+                    }
+                },
+                "tags": [
+                    "organizations"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/org/users/{id}/role": {
+            "patch": {
+                "operationId": "OrganizationsController_updateRole",
+                "summary": "Update an organization user role",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserRoleDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User role updated"
+                    }
+                },
+                "tags": [
+                    "organizations"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/org/users/{id}": {
+            "delete": {
+                "operationId": "OrganizationsController_revoke",
+                "summary": "Revoke an organization user",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User access revoked"
+                    }
+                },
+                "tags": [
+                    "organizations"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/rules": {
+            "post": {
+                "operationId": "RulesController_create",
+                "summary": "Create a new rule",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateRuleDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Rule created"
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "get": {
+                "operationId": "RulesController_findAll",
+                "summary": "List all rules for organization",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Rules list"
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/rules/export": {
+            "get": {
+                "operationId": "RulesController_exportRules",
+                "summary": "Export rules as JSON bundle",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Rules bundle JSON"
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/rules/import": {
+            "post": {
+                "operationId": "RulesController_importRules",
+                "summary": "Import rules from JSON bundle",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ImportRulesBundleDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/rules/{id}": {
+            "get": {
+                "operationId": "RulesController_findOne",
+                "summary": "Get rule by ID",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "patch": {
+                "operationId": "RulesController_update",
+                "summary": "Update a rule",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateRuleDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "RulesController_softDelete",
+                "summary": "Soft delete a rule",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/rules/{id}/activate": {
+            "post": {
+                "operationId": "RulesController_activate",
+                "summary": "Activate a rule",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/rules/{id}/deactivate": {
+            "post": {
+                "operationId": "RulesController_deactivate",
+                "summary": "Deactivate a rule",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/rules/{id}/test": {
+            "post": {
+                "operationId": "RulesController_testRule",
+                "summary": "Test a rule with sample data",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TestRuleDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/sessions/{id}/rules/preview": {
+            "get": {
+                "operationId": "RulesController_previewSessionRules",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/agent-executions/{id}/rules": {
+            "get": {
+                "operationId": "RulesController_listAgentExecutionRules",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "rules"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{workflowId}/comments": {
+            "post": {
+                "operationId": "CommentsController_create",
+                "summary": "Create a comment on a workflow",
+                "parameters": [
+                    {
+                        "name": "workflowId",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the workflow",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateCommentDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Comment created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid role"
+                    },
+                    "404": {
+                        "description": "Workflow not found"
+                    }
+                },
+                "tags": [
+                    "Comments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "get": {
+                "operationId": "CommentsController_list",
+                "summary": "List all comments for a workflow",
+                "parameters": [
+                    {
+                        "name": "workflowId",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the workflow",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "element_id",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by element ID",
+                        "schema": {}
+                    },
+                    {
+                        "name": "type",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "enum": [
+                                "question",
+                                "correction",
+                                "approval",
+                                "suggestion",
+                                "escalation"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "resolved",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comments retrieved successfully"
+                    }
+                },
+                "tags": [
+                    "Comments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/comments/{id}": {
+            "patch": {
+                "operationId": "CommentOperationsController_update",
+                "summary": "Update a comment (author or admin only)",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the comment",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCommentDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Comment updated successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - not author or admin"
+                    },
+                    "404": {
+                        "description": "Comment not found"
+                    }
+                },
+                "tags": [
+                    "Comments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "CommentOperationsController_delete",
+                "summary": "Soft delete a comment (author or admin only)",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the comment",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Comment deleted successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - not author or admin"
+                    }
+                },
+                "tags": [
+                    "Comments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/comments/{id}/reply": {
+            "post": {
+                "operationId": "CommentOperationsController_reply",
+                "summary": "Add a threaded reply to a comment",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the parent comment",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateReplyDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Reply created successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid role"
+                    }
+                },
+                "tags": [
+                    "Comments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/comments/{id}/resolve": {
+            "post": {
+                "operationId": "CommentOperationsController_resolve",
+                "summary": "Mark a comment as resolved",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the comment",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResolveCommentDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Comment resolved successfully"
+                    },
+                    "400": {
+                        "description": "Resolution note is required"
+                    }
+                },
+                "tags": [
+                    "Comments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/comments/{id}/inject-to-ai": {
+            "post": {
+                "operationId": "CommentOperationsController_injectToAi",
+                "summary": "Inject comment to AI for processing (BA, Process Owner, Admin only)",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the comment",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InjectToAiDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "AI task injected successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid role"
+                    }
+                },
+                "tags": [
+                    "Comments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/comments/{id}/assign": {
+            "patch": {
+                "operationId": "CommentOperationsController_assign",
+                "summary": "Assign a comment to a user for resolution",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the comment",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssignCommentDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Comment assigned successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - not author, admin, or process owner"
+                    },
+                    "404": {
+                        "description": "Assignee not found in organization"
+                    }
+                },
+                "tags": [
+                    "Comments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/comments/assigned-to-me": {
+            "get": {
+                "operationId": "CommentsAssignedController_getAssignedToMe",
+                "summary": "Get comments assigned to the current user",
+                "parameters": [
+                    {
+                        "name": "resolved",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "enum": [
+                                "true",
+                                "false"
+                            ],
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Comments retrieved successfully"
+                    }
+                },
+                "tags": [
+                    "Comments"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{workflowId}/elements/{elemId}/approve": {
+            "patch": {
+                "operationId": "ElementReviewController_approveElement",
+                "summary": "Approve a workflow element",
+                "parameters": [
+                    {
+                        "name": "workflowId",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the workflow",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "elemId",
+                        "required": true,
+                        "in": "path",
+                        "description": "ID of the element",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Element approved successfully"
+                    },
+                    "404": {
+                        "description": "Workflow or element not found"
+                    }
+                },
+                "tags": [
+                    "Element Review"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{workflowId}/elements/approve-all": {
+            "post": {
+                "operationId": "ElementReviewController_bulkApprove",
+                "summary": "Bulk approve workflow elements (Admin or Process Owner only)",
+                "parameters": [
+                    {
+                        "name": "workflowId",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the workflow",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Elements approved successfully"
+                    },
+                    "403": {
+                        "description": "Forbidden - not Admin or Process Owner"
+                    }
+                },
+                "tags": [
+                    "Element Review"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{workflowId}/review-progress": {
+            "get": {
+                "operationId": "ReviewProgressController_getReviewProgress",
+                "summary": "Get review progress for a workflow (excludes archived elements)",
+                "parameters": [
+                    {
+                        "name": "workflowId",
+                        "required": true,
+                        "in": "path",
+                        "description": "UUID of the workflow",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review progress retrieved successfully"
+                    },
+                    "404": {
+                        "description": "Workflow not found"
+                    }
+                },
+                "tags": [
+                    "Review Progress"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/sessions": {
+            "post": {
+                "operationId": "SessionsController_create",
+                "summary": "Create an elicitation session for a workflow",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateSessionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Session created"
+                    }
+                },
+                "tags": [
+                    "sessions"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/sessions/{id}": {
+            "get": {
+                "operationId": "SessionsController_get",
+                "summary": "Get session lifecycle state",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "sessions"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "SessionsController_archive",
+                "summary": "Archive a session and related rows",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "sessions"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/sessions/{id}/mode": {
+            "patch": {
+                "operationId": "SessionsController_updateMode",
+                "summary": "Switch session mode",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSessionModeDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "sessions"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/sessions/{id}/finalize": {
+            "post": {
+                "operationId": "SessionsController_finalize",
+                "summary": "Finalize session into draft ready state",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "sessions"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/sessions/{id}/workflow-state": {
+            "get": {
+                "operationId": "SessionsController_getWorkflowState",
+                "summary": "Get latest workflow elements for this session",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "sessions"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/sessions/{id}/progress": {
+            "get": {
+                "operationId": "SessionsController_getProgress",
+                "summary": "Get latest AI pipeline progress for this session",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "sessions"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/sessions/{id}/status": {
+            "patch": {
+                "operationId": "SessionsController_overrideStatus",
+                "summary": "Admin-only manual session status override",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSessionStatusDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "sessions"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/skills": {
+            "post": {
+                "operationId": "SkillsController_create",
+                "summary": "Create a new skill",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateSkillDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Skill created"
+                    }
+                },
+                "tags": [
+                    "skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "get": {
+                "operationId": "SkillsController_findAll",
+                "summary": "List skills for organization",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "isActive",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/skills/{id}": {
+            "get": {
+                "operationId": "SkillsController_findOne",
+                "summary": "Get skill detail with usage stats",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "patch": {
+                "operationId": "SkillsController_update",
+                "summary": "Update skill",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSkillDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "SkillsController_remove",
+                "summary": "Soft delete skill",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/skills/search": {
+            "post": {
+                "operationId": "SkillsController_search",
+                "summary": "Semantic search for skills",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SemanticSearchDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/skills/import": {
+            "post": {
+                "operationId": "SkillsController_import",
+                "summary": "Import skills in batch",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ImportSkillsDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/skills/export": {
+            "get": {
+                "operationId": "SkillsController_export",
+                "summary": "Export all active skills",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/skills/{id}/applications": {
+            "get": {
+                "operationId": "SkillsController_findApplications",
+                "summary": "Get skill application history",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/skills/analytics": {
+            "get": {
+                "operationId": "AdminSkillsController_getAnalytics",
+                "summary": "Get skill analytics - Admin only",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "admin-skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/agent-executions/{id}/skills": {
+            "get": {
+                "operationId": "AgentExecutionsSkillsController_getExecutionSkills",
+                "summary": "Get skills applied to an agent execution",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "agent-executions-skills"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows": {
+            "post": {
+                "operationId": "WorkflowsController_create",
+                "summary": "Create a new workflow",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateWorkflowDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Workflow created"
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "get": {
+                "operationId": "WorkflowsController_findAll",
+                "summary": "List all workflows",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Workflows list"
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}": {
+            "get": {
+                "operationId": "WorkflowsController_findOne",
+                "summary": "Get workflow by ID",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "patch": {
+                "operationId": "WorkflowsController_update",
+                "summary": "Update workflow",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "delete": {
+                "operationId": "WorkflowsController_archive",
+                "summary": "Archive a workflow",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/versions": {
+            "post": {
+                "operationId": "WorkflowsController_createVersion",
+                "summary": "Create a new workflow version",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateVersionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            },
+            "get": {
+                "operationId": "WorkflowsController_findVersions",
+                "summary": "Get all versions of a workflow",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/versions/{versionNumber}": {
+            "get": {
+                "operationId": "WorkflowsController_findVersion",
+                "summary": "Get a specific workflow version",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "versionNumber",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/diff/{v1}/{v2}": {
+            "get": {
+                "operationId": "WorkflowsController_computeDiff",
+                "summary": "Compute diff between two versions",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "v1",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "v2",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/duplicate": {
+            "post": {
+                "operationId": "WorkflowsController_duplicate",
+                "summary": "Duplicate a workflow",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DuplicateWorkflowDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/diagram-data": {
+            "get": {
+                "operationId": "WorkflowsController_getDiagramData",
+                "summary": "Get workflow diagram data",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/audit-log": {
+            "get": {
+                "operationId": "WorkflowsController_getAuditLog",
+                "summary": "Get workflow audit log",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/decision-log": {
+            "get": {
+                "operationId": "WorkflowsController_getDecisionLog",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/audit-log/export": {
+            "post": {
+                "operationId": "WorkflowsController_exportAuditLog",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/export/elsa": {
+            "post": {
+                "operationId": "WorkflowsController_exportToElsa",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/export/bpmn": {
+            "post": {
+                "operationId": "WorkflowsController_exportToBpmn",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/workflows/{id}/export/pdf": {
+            "post": {
+                "operationId": "WorkflowsController_exportToPdf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "workflows"
+                ],
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "FlowForge API",
+        "description": "The FlowForge REST API description",
+        "version": "1.0",
+        "contact": {}
+    },
+    "tags": [
+        {
+            "name": "health",
+            "description": "Health check endpoints"
+        },
+        {
+            "name": "skills",
+            "description": "Skills management"
+        },
+        {
+            "name": "rules",
+            "description": "Rules management"
+        },
+        {
+            "name": "workflows",
+            "description": "Workflows management"
+        },
+        {
+            "name": "sessions",
+            "description": "Elicitation sessions"
+        },
+        {
+            "name": "organizations",
+            "description": "Organization management"
+        },
+        {
+            "name": "messages",
+            "description": "Messages"
+        },
+        {
+            "name": "documents",
+            "description": "Document management"
+        },
+        {
+            "name": "comments",
+            "description": "Comments"
+        }
+    ],
+    "servers": [],
+    "components": {
+        "securitySchemes": {
+            "bearer": {
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "type": "http"
+            }
+        },
+        "schemas": {
+            "DocumentResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "workflowId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "sessionId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "filename": {
+                        "type": "string"
+                    },
+                    "fileType": {
+                        "type": "string"
+                    },
+                    "storageUrl": {
+                        "type": "string"
+                    },
+                    "fileSizeBytes": {
+                        "type": "number"
+                    },
+                    "docVersion": {
+                        "type": "number"
+                    },
+                    "presignedUrl": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "deletedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "workflowId",
+                    "sessionId",
+                    "filename",
+                    "fileType",
+                    "storageUrl",
+                    "fileSizeBytes",
+                    "docVersion",
+                    "createdAt"
+                ]
+            },
+            "DocumentExtractedTextDto": {
+                "type": "object",
+                "properties": {
+                    "documentId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "docVersion": {
+                        "type": "number"
+                    },
+                    "extractedText": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "preprocessingConfidence": {
+                        "type": "number",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "documentId",
+                    "docVersion"
+                ]
+            },
+            "UpdateExtractedTextDto": {
+                "type": "object",
+                "properties": {
+                    "extractedText": {
+                        "type": "string",
+                        "description": "User-corrected extracted text that should be used by the AI pipeline."
+                    }
+                },
+                "required": [
+                    "extractedText"
+                ]
+            },
+            "MessageResponseDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "sessionId": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "ai",
+                            "system"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "user_input",
+                            "ai_question",
+                            "ai_response",
+                            "ai_summary",
+                            "ai_update",
+                            "ai_confidence_report",
+                            "system_note",
+                            "system_status"
+                        ]
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "sessionId",
+                    "role",
+                    "type",
+                    "content",
+                    "metadata",
+                    "createdAt"
+                ]
+            },
+            "CreateMessageDto": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "ai",
+                            "system"
+                        ]
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "user_input",
+                            "ai_question",
+                            "ai_response",
+                            "ai_summary",
+                            "ai_update",
+                            "ai_confidence_report",
+                            "system_note",
+                            "system_status"
+                        ]
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "required": [
+                    "role",
+                    "type",
+                    "content"
+                ]
+            },
+            "PaginatedMessagesDto": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MessageResponseDto"
+                        }
+                    },
+                    "next_cursor": {
+                        "type": "string",
+                        "description": "Opaque cursor to request the next page.",
+                        "nullable": true
+                    }
+                },
+                "required": [
+                    "items"
+                ]
+            },
+            "InviteUserDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "analyst@example.com"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "admin",
+                            "process_owner",
+                            "business_analyst",
+                            "reviewer",
+                            "viewer"
+                        ],
+                        "default": "viewer"
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "UpdateUserRoleDto": {
+                "type": "object",
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "admin",
+                            "process_owner",
+                            "business_analyst",
+                            "reviewer",
+                            "viewer"
+                        ]
+                    }
+                },
+                "required": [
+                    "role"
+                ]
+            },
+            "CreateRuleDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "ImportRulesBundleDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "UpdateRuleDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "TestRuleDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "CreateCommentDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "UpdateCommentDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "CreateReplyDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "ResolveCommentDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "InjectToAiDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "AssignCommentDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "CreateSessionDto": {
+                "type": "object",
+                "properties": {
+                    "workflowId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "auto",
+                            "interactive"
+                        ]
+                    }
+                },
+                "required": [
+                    "workflowId",
+                    "mode"
+                ]
+            },
+            "UpdateSessionModeDto": {
+                "type": "object",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "auto",
+                            "interactive"
+                        ]
+                    }
+                },
+                "required": [
+                    "mode"
+                ]
+            },
+            "UpdateSessionStatusDto": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "created",
+                            "awaiting_input",
+                            "processing",
+                            "draft_ready",
+                            "needs_reconciliation",
+                            "in_elicitation",
+                            "in_review",
+                            "validated",
+                            "exported",
+                            "archived",
+                            "error"
+                        ]
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Manual operator correction after reviewing transcript."
+                    },
+                    "force": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "required": [
+                    "status",
+                    "reason"
+                ]
+            },
+            "CreateSkillDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 256
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "skillType": {
+                        "type": "string",
+                        "enum": [
+                            "VOCABULARY",
+                            "ARCHETYPE",
+                            "FEW_SHOT_EXAMPLE",
+                            "DOMAIN_KNOWLEDGE",
+                            "ACTOR_CATALOG",
+                            "PROMPT_TEMPLATE"
+                        ]
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "appliesToDomains": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "appliesToAgents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "ORCHESTRATOR",
+                                "INTAKE",
+                                "EXTRACTION",
+                                "PATTERN",
+                                "GAP_DETECTION",
+                                "QA",
+                                "VALIDATION",
+                                "EXPORT",
+                                "DIVERGENCE",
+                                "RULES_SKILLS_LOADER"
+                            ]
+                        }
+                    },
+                    "isMandatory": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "skillType",
+                    "content"
+                ]
+            },
+            "UpdateSkillDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 256
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "skillType": {
+                        "type": "string",
+                        "enum": [
+                            "VOCABULARY",
+                            "ARCHETYPE",
+                            "FEW_SHOT_EXAMPLE",
+                            "DOMAIN_KNOWLEDGE",
+                            "ACTOR_CATALOG",
+                            "PROMPT_TEMPLATE"
+                        ]
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "appliesToDomains": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "appliesToAgents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "ORCHESTRATOR",
+                                "INTAKE",
+                                "EXTRACTION",
+                                "PATTERN",
+                                "GAP_DETECTION",
+                                "QA",
+                                "VALIDATION",
+                                "EXPORT",
+                                "DIVERGENCE",
+                                "RULES_SKILLS_LOADER"
+                            ]
+                        }
+                    },
+                    "isMandatory": {
+                        "type": "boolean"
+                    },
+                    "isActive": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "SemanticSearchDto": {
+                "type": "object",
+                "properties": {
+                    "queryText": {
+                        "type": "string"
+                    },
+                    "topK": {
+                        "type": "number",
+                        "default": 5
+                    },
+                    "filterTypes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "VOCABULARY",
+                                "ARCHETYPE",
+                                "FEW_SHOT_EXAMPLE",
+                                "DOMAIN_KNOWLEDGE",
+                                "ACTOR_CATALOG",
+                                "PROMPT_TEMPLATE"
+                            ]
+                        }
+                    },
+                    "minSimilarity": {
+                        "type": "number",
+                        "default": 0.35
+                    }
+                },
+                "required": [
+                    "queryText"
+                ]
+            },
+            "ImportSkillsDto": {
+                "type": "object",
+                "properties": {
+                    "skills": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CreateSkillDto"
+                        }
+                    }
+                },
+                "required": [
+                    "skills"
+                ]
+            },
+            "CreateWorkflowDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "CreateVersionDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "DuplicateWorkflowDto": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    }
+}

@@ -36,6 +36,7 @@ export class WorkflowsService {
       tags: dto.tags ?? [],
       orgId,
       ownerId,
+      projectId: dto.projectId,
       status: WorkflowStatus.DRAFT,
       currentVersion: 0,
     });
@@ -67,7 +68,7 @@ export class WorkflowsService {
   }
 
   async findAll(filter: WorkflowFilterDto, orgId: string): Promise<{ workflows: Workflow[]; total: number }> {
-    const { status, domain, tags, search, page = 1, limit = 20 } = filter;
+    const { status, domain, tags, search, projectId, page = 1, limit = 20 } = filter;
 
     const query = this.workflowRepository.createQueryBuilder('workflow')
       .where('workflow.orgId = :orgId', { orgId })
@@ -83,6 +84,10 @@ export class WorkflowsService {
 
     if (tags && tags.length > 0) {
       query.andWhere('workflow.tags && :tags', { tags });
+    }
+
+    if (projectId) {
+      query.andWhere('workflow.projectId = :projectId', { projectId });
     }
 
     if (search) {

@@ -215,7 +215,10 @@ export class AIGatewaySubscriberService implements OnModuleInit {
       session_id: sessionId,
       org_id: orgId,
       pipeline_execution_id: (payload.pipeline_execution_id as string) ?? latestPipeline?.id ?? '',
-      workflow_json: (payload.workflow_json as Record<string, unknown>) ?? (payload.elements_json as Record<string, unknown>) ?? {},
+      // Prefer elements_json (entities/flow format for React Flow rendering)
+      // over workflow_json (Elsa format) for the workflow version's elementsJson
+      workflow_json: (payload.elements_json as Record<string, unknown>) ?? (payload.workflow_json as Record<string, unknown>) ?? {},
+      elsa_json: (payload.workflow_json as Record<string, unknown>) ?? undefined,
       confidence: (payload.confidence as number) ?? 0,
       summary: (payload.ai_summary as string) ?? (payload.summary as string) ?? 'AI pipeline completed',
       source: (payload.source as 'ai') ?? 'ai',

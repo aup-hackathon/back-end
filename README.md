@@ -2,46 +2,190 @@
 
 NestJS gateway and local development infrastructure for FlowForge.
 
-## Current Backend Status
+## NestJS Gateway Documentation
 
-Completed backend issues:
+### 1. Overview
 
-- `BE-01`: database schema, TypeORM entities, migrations, `pgvector`, seed data for agent definitions and process patterns, and immutable audit trigger.
-- `BE-05`: organization user invites, role updates, access revocation, same-org guard, last-admin protection, invite token storage, and audit logging.
-- `BE-09`: session lifecycle API, FSM enforcement, workflow-scoped org isolation, mode switching, manual finalization, workflow state/progress endpoints, admin status override, soft archive cascade, audit logging, and `session.events.finalized` NATS publishing.
-- `BE-21`: Docker Compose local infrastructure for NestJS, FastAPI placeholder, Next.js placeholder, app Postgres, Elsa Postgres, NATS JetStream, MinIO, Ollama, and initialization scripts.
-- `BE-22`: NestJS bootstrap with global config validation, Pino logging, correlation IDs, global filters/interceptors/guards, Swagger, Terminus health, and `DEV_BYPASS_AUTH` for backend development before full auth lands.
+The NestJS Gateway is the orchestration core of FlowForge. It exposes REST and WebSocket interfaces to clients, enforces multi-tenant access boundaries, coordinates domain modules, and delegates AI processing to the FastAPI service through NATS JetStream.
 
-Current implemented API groups:
+In architectural terms, this backend is a modular monolith: infrastructure concerns are centralized, while business capabilities are organized into focused modules.
 
-- `GET /api/health/ping`
-- `POST /api/org/invite`
-- `PATCH /api/org/users/:id/role`
-- `DELETE /api/org/users/:id`
-- `POST /api/sessions`
-- `GET /api/sessions/:id`
-- `PATCH /api/sessions/:id/mode`
-- `POST /api/sessions/:id/finalize`
-- `GET /api/sessions/:id/workflow-state`
-- `GET /api/sessions/:id/progress`
-- `DELETE /api/sessions/:id`
-- `PATCH /api/sessions/:id/status`
+### 2. System Architecture
 
-Important implementation notes:
+```mermaid
+flowchart LR
+	subgraph Clients[External Consumers]
+		FE[React Frontend]
+		WS[WebSocket Clients]
+		EXT[External Services]
+	end
 
-- Auth issues `BE-02`, `BE-03`, and `BE-04` are intentionally skipped for now. Use `DEV_BYPASS_AUTH=true` for local backend route smoke tests.
-- `session` rows do not have a direct `org_id`; BE-09 enforces org isolation through the linked `workflow.org_id`.
-- BE-09 includes a minimal NATS publisher only for `session.events.finalized`. The full NATS gateway/contracts work continues in `BE-10`.
-- The WebSocket event for `session.needs_reconciliation` is queued through a placeholder service until `BE-17` adds the real gateway.
+	subgraph Gateway[NestJS Gateway]
+		REST[REST Controllers]
+		RT[RealtimeGateway\nSocket.IO]
+		Core[CoreModule\nPino + Swagger + Filters]
+		Auth[AuthGuard / OrgGuard]
 
-Verification baseline used so far:
+		subgraph Domains[Domain Modules]
+			Sessions[SessionsModule]
+			Workflows[WorkflowsModule]
+			AIGW[AIGatewayModule]
+			Docs[DocumentsModule]
+			Skills[SkillsModule]
+			Rules[RulesModule]
+			Audit[AuditModule]
+		end
 
-- `pnpm build`
-- `pnpm lint`
-- `pnpm test`
-- Runtime smoke tests against Dockerized `app-db`; BE-09 additionally verified against Dockerized NATS JetStream.
+		NatsPub[NatsPublisherService]
+	end
 
-## Quick Start
+	subgraph Infra[Infrastructure]
+		PG[(PostgreSQL + pgvector)]
+		Minio[(MinIO S3)]
+		NATS[NATS JetStream]
+	end
+
+	FE --> REST
+	WS --> RT
+	EXT --> REST
+
+	REST --> Auth
+	RT --> Auth
+
+	REST --> Sessions
+	REST --> Workflows
+	REST --> Docs
+	REST --> Skills
+	REST --> Rules
+	REST --> Audit
+
+	Sessions --> PG
+	Workflows --> PG
+	Skills --> PG
+	Docs --> Minio
+	AIGW --> NatsPub
+	NatsPub --> NATS
+	AIGW --> PG
+
+	Core --- REST
+	Core --- RT
+```
+
+### 3. Global Infrastructure
+
+The gateway applies shared, cross-cutting controls across all modules:
+
+- Observability: structured logging via Pino and dependency-oriented health checks
+- Security: multi-tenancy guardrails through Org and auth controls
+- API Docs: Swagger/OpenAPI at `/api/docs`
+- Realtime: room-based Socket.IO updates through `RealtimeGateway`
+
+### 4. Domain Modules
+
+| Domain Area | Responsibility | Key Components |
+|---|---|---|
+| Session and workflow lifecycle | Manages the elicitation finite-state machine and version transitions | `SessionStatus`, `session-fsm.ts` |
+| AI gateway and execution | Creates pipeline execution records, publishes tasks, and consumes AI results | `AIGatewayService`, `AIGatewaySubscriberService` |
+| Documents, skills, and rules | Ingestion, reusable AI behavior libraries, and org-specific constraints | `DocumentsModule`, `SkillsModule`, `RulesModule` |
+| Realtime and messaging | Emits live events to clients and orchestrates async communication | `RealtimeGateway`, `NatsPublisherService` |
+| Persistence and schema | Relational and vector storage with migrations | TypeORM, PostgreSQL, pgvector |
+
+### 5. Backend Processing Flow
+
+```mermaid
+sequenceDiagram
+	participant UI as React Frontend
+	participant API as NestJS Controllers
+	participant Guard as AuthGuard/OrgGuard
+	participant Session as Sessions/Workflows Modules
+	participant AI as AIGatewayModule
+	participant Bus as NATS JetStream
+	participant Worker as FastAPI AI Service
+	participant RT as RealtimeGateway
+	participant DB as PostgreSQL/pgvector
+	participant Store as MinIO
+
+	UI->>API: REST request or WebSocket event
+	API->>Guard: Validate auth and organization access
+	Guard-->>API: Access granted
+
+	API->>Session: Persist session/workflow state
+	Session->>DB: Write metadata and lifecycle state
+
+	API->>AI: Request AI pipeline execution
+	AI->>DB: Create pipeline execution record
+	AI->>Bus: Publish ai.context.load / ai.tasks.new
+
+	Bus->>Worker: Deliver task
+	Worker-->>Bus: Publish processing result
+	Bus-->>AI: Subscriber receives result
+
+	API->>RT: Broadcast state updates to room
+	RT-->>UI: Live status and output events
+
+	API->>Store: Upload and reference documents when provided
+```
+
+### 6. Messaging and Async Contracts
+
+The gateway uses NATS JetStream to decouple client interactions from AI execution and to provide resilient asynchronous processing.
+
+Known backend subjects from the documented flow:
+
+- `ai.context.load`
+- `ai.tasks.new`
+
+This pattern allows the gateway to persist intent immediately, dispatch jobs asynchronously, and stream progress back to active client rooms.
+
+### 7. Persistence Model
+
+The backend persistence layer uses PostgreSQL with pgvector for semantic features and TypeORM for schema management.
+
+```mermaid
+flowchart TB
+	subgraph Nest[Backend Modules]
+		Sess[Sessions]
+		Wf[Workflows]
+		Aig[AIGateway]
+		Doc[Documents]
+		Sk[Skills]
+		Ru[Rules]
+	end
+
+	PG[(PostgreSQL)]
+	Vec[(pgvector)]
+	M[(TypeORM Migrations)]
+	Obj[(MinIO Object Storage)]
+	Elsa[(Elsa DB - separate instance)]
+
+	Sess --> PG
+	Wf --> PG
+	Aig --> PG
+	Sk --> Vec
+	Ru --> PG
+	Doc --> Obj
+	M --> PG
+	Wf -. exported definitions .-> Elsa
+```
+
+### 8. Health Monitoring
+
+The gateway exposes service-level health checks that verify the status of key dependencies:
+
+| Endpoint | Purpose |
+|---|---|
+| `/api/health/ai-service` | Verifies FastAPI worker availability |
+| `/api/health/ollama` | Verifies local LLM provider availability |
+| `/api/health/pgvector` | Verifies vector database connectivity |
+| `/api/health/nats` | Verifies JetStream connectivity and stream status |
+
+### 9. Operational Role in the Platform
+
+The NestJS backend is the control plane between UI and AI execution. It does not perform heavy language inference itself. Instead, it enforces access, stores canonical state, triggers asynchronous AI work, and distributes realtime updates.
+
+## Local Execution
+
+### Quick Start
 
 ```bash
 pnpm install
@@ -53,11 +197,28 @@ pnpm migration:run
 pnpm start:dev
 ```
 
-The backend health endpoint is available at `http://localhost:3000/api/health/ping`.
+Health endpoint:
 
-## Docker Compose
+- `http://localhost:3000/api/health/ping`
 
-The compose stack defines:
+### Useful Commands
+
+Build, lint, and tests:
+
+```bash
+pnpm build
+pnpm lint
+pnpm test
+```
+
+Run smoke checks:
+
+```bash
+./scripts/smoke.sh
+SMOKE_PULL_MODELS=1 ./scripts/smoke.sh
+```
+
+### Docker Compose Services
 
 - `app-db`: PostgreSQL 16 with `pgvector`, `pgcrypto`, and `citext`
 - `elsa-db`: PostgreSQL 16 for Elsa
@@ -70,7 +231,7 @@ The compose stack defines:
 - `nestjs`: this backend Dockerfile
 - `fastapi` and `nextjs`: lightweight placeholders by default
 
-This backend repo is not currently a monorepo. The compose file therefore defaults `FASTAPI_CONTEXT` and `NEXTJS_CONTEXT` to placeholders under `infra/placeholders`. When the real services are present, override these in `.env`:
+When real FastAPI and frontend services are present, override contexts in `.env`:
 
 ```bash
 NESTJS_CONTEXT=./backend
@@ -78,40 +239,17 @@ FASTAPI_CONTEXT=./ai-service
 NEXTJS_CONTEXT=./frontend
 ```
 
-## Reset Data
+### Reset Data
 
-Stop containers but keep data:
+Stop containers and keep volumes:
 
 ```bash
 docker compose down
 ```
 
-Remove containers and all persistent volumes:
+Stop containers and remove volumes:
 
 ```bash
 docker compose down -v
 ```
 
-## Ollama Models
-
-Pull models before demo day:
-
-```bash
-./scripts/pre-pull-models.sh
-```
-
-This fills the named `ollama-models` volume so the demo does not depend on downloading `mistral:7b-instruct` on event Wi-Fi.
-
-## Smoke Test
-
-```bash
-./scripts/smoke.sh
-```
-
-By default the smoke test does not pull Ollama models. To include model pulling:
-
-```bash
-SMOKE_PULL_MODELS=1 ./scripts/smoke.sh
-```
-
-NATS runs without auth inside the compose network for hackathon scope. Production should enable NKeys or another authenticated NATS setup.

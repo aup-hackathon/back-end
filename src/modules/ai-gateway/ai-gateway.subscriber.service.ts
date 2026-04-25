@@ -104,7 +104,8 @@ export class AIGatewaySubscriberService implements OnModuleInit {
       subject: SUBJECTS.AI_TASKS_RESULT,
       durableName: CONSUMERS.AI_RESULT,
       handler: async (payload) => {
-        await this.generationCompleteHandler.handle(payload as unknown as AiTaskResultEvent);
+        const enriched = await this.enrichResultPayload(payload);
+        await this.generationCompleteHandler.handle(enriched);
       },
       onExhausted: async (params) => {
         await this.retryExhaustedHandler.handle({
@@ -121,7 +122,19 @@ export class AIGatewaySubscriberService implements OnModuleInit {
       subject: SUBJECTS.AI_TASKS_PROGRESS,
       durableName: CONSUMERS.AI_PROGRESS,
       handler: async (payload) => {
-        await this.streamTokenHandler.handle(payload as unknown as AiTaskProgressEvent);
+        // The Python AI service sends a simplified progress payload:
+        //   { session_id, agent_name, status, progress_pct, message }
+        // which is incompatible with StreamTokenHandler's expected schema.
+        // Emit directly to the realtime gateway instead.
+        const sessionId = payload.session_id as string;
+        if (sessionId) {
+          this.realtimeGateway.emitToSession(sessionId, 'pipeline.progress', {
+            agentName: payload.agent_name ?? 'pipeline',
+            status: payload.status ?? 'running',
+            progressPct: payload.progress_pct ?? 0,
+            message: payload.message ?? '',
+          });
+        }
       },
       onExhausted: async (params) => {
         await this.retryExhaustedHandler.handle({
@@ -168,5 +181,44 @@ export class AIGatewaySubscriberService implements OnModuleInit {
         });
       },
     });
+  }
+
+  /**
+   * The Python AI service (flou2flow) sends a simplified result payload:
+   *   { session_id, workflow_json, elements_json, ai_summary, confidence, questions }
+   *
+   * The GenerationCompleteHandler expects the full AiTaskResultEvent:
+   *   { correlation_id, session_id, org_id, pipeline_execution_id, workflow_json, confidence, summary, ... }
+   *
+   * This method enriches the payload by looking up the latest pipeline execution
+   * for the given session and filling in the missing fields.
+   */
+  private async enrichResultPayload(payload: Record<string, unknown>): Promise<AiTaskResultEvent> {
+    const sessionId = payload.session_id as string;
+
+    // Look up the latest pipeline execution for this session
+    const latestPipeline = await this.pipelineExecutionsRepository.findOne({
+      where: { sessionId },
+      order: { createdAt: 'DESC' },
+    });
+
+    // Look up the session to get the workflow, then the org_id
+    const session = await this.sessionsRepository.findOne({ where: { id: sessionId } });
+    let orgId = '';
+    if (session) {
+      const workflow = await this.workflowsRepository.findOne({ where: { id: session.workflowId } });
+      orgId = workflow?.orgId ?? '';
+    }
+
+    return {
+      correlation_id: (payload.correlation_id as string) ?? latestPipeline?.natsMessageId ?? `enriched-${Date.now()}`,
+      session_id: sessionId,
+      org_id: orgId,
+      pipeline_execution_id: (payload.pipeline_execution_id as string) ?? latestPipeline?.id ?? '',
+      workflow_json: (payload.workflow_json as Record<string, unknown>) ?? (payload.elements_json as Record<string, unknown>) ?? {},
+      confidence: (payload.confidence as number) ?? 0,
+      summary: (payload.ai_summary as string) ?? (payload.summary as string) ?? 'AI pipeline completed',
+      source: (payload.source as 'ai') ?? 'ai',
+    };
   }
 }

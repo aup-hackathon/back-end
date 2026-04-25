@@ -8,8 +8,13 @@ import { SessionMessagesController } from './controllers/session-messages.contro
 import { Message } from './entities';
 import { MessagesService } from './services/messages.service';
 
+import { SessionsModule } from '../sessions/sessions.module';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([Message, Session, Workflow])],
+  imports: [
+    TypeOrmModule.forFeature([Message, Session, Workflow]),
+    SessionsModule,
+  ],
   controllers: [MessagesController, SessionMessagesController],
   providers: [MessagesService],
   exports: [MessagesService],

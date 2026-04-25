@@ -36,6 +36,12 @@ export class SessionsController {
     return this.sessionsService.getSession(sessionId, caller);
   }
 
+  @Get('workflow/:workflowId')
+  @ApiOperation({ summary: 'Get session by workflow ID' })
+  getByWorkflowId(@Param('workflowId') workflowId: string, @CurrentUser() caller: RequestUser) {
+    return this.sessionsService.getSessionByWorkflowId(workflowId, caller);
+  }
+
   @Patch(':id/mode')
   @UseGuards(SessionOrgGuard)
   @ApiOperation({ summary: 'Switch session mode' })

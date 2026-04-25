@@ -32,7 +32,10 @@ async function bootstrap() {
   if (process.env.NODE_ENV === 'production' && corsOrigin.includes('*')) {
     throw new Error('Wildcard CORS origin is not allowed in production');
   }
-  app.enableCors({ origin: corsOrigin, credentials: true });
+  app.enableCors({ 
+    origin: process.env.NODE_ENV === 'production' ? corsOrigin : true, 
+    credentials: true 
+  });
 
   app.setGlobalPrefix('api');
 

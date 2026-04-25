@@ -174,11 +174,14 @@ export class GenerationCompleteHandler {
   }
 
   private async assertOrgMatch(
-    orgId: string,
+    orgId: string | undefined | null,
     sessionId: string,
     sessionsRepository: Repository<Session>,
     workflowsRepository: Repository<Workflow>,
   ): Promise<void> {
+    // Skip org validation when the AI service doesn't include org_id in the payload
+    if (!orgId) return;
+
     const session = await sessionsRepository.findOne({ where: { id: sessionId } });
     if (!session) throw new Error('Session not found for org validation');
     const workflow = await workflowsRepository.findOne({ where: { id: session.workflowId } });

@@ -71,6 +71,20 @@ export class SessionsService {
     return this.serializeSession(session);
   }
 
+  async getSessionByWorkflowId(workflowId: string, caller: RequestUser) {
+    await this.findWorkflowInOrgOrThrow(workflowId, caller.orgId);
+    const session = await this.sessionsRepository.findOne({
+      where: { workflowId },
+      order: { createdAt: 'DESC' },
+    });
+    
+    if (!session) {
+      throw new NotFoundException(`No session found for workflow ${workflowId}`);
+    }
+    
+    return this.serializeSession(session);
+  }
+
   async updateMode(sessionId: string, dto: UpdateSessionModeDto, caller: RequestUser) {
     const session = await this.findSessionInOrgOrThrow(sessionId, caller.orgId);
     this.assertOwnerOrAdmin(session, caller);

@@ -35,6 +35,7 @@ export class ProjectsService {
     }
 
     const project = this.projectRepository.create({
+      id: require('crypto').randomUUID(),
       name: dto.name,
       orgId,
       ownerId,

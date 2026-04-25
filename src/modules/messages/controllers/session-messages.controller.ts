@@ -27,22 +27,36 @@ import {
   PaginatedMessagesDto,
 } from '../dtos';
 import { MessagesService } from '../services/messages.service';
+import { SessionsService } from '../../sessions/sessions.service';
 
 @ApiTags('messages')
 @ApiBearerAuth()
 @Controller('sessions/:sessionId/messages')
 export class SessionMessagesController {
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(
+    private readonly messagesService: MessagesService,
+    private readonly sessionsService: SessionsService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create an immutable message inside a session.' })
   @ApiCreatedResponse({ type: MessageResponseDto })
-  createMessage(
+  async createMessage(
     @Param('sessionId', new ParseUUIDPipe()) sessionId: string,
     @Body() dto: CreateMessageDto,
     @CurrentUser() currentUser: { id: string; orgId: string; role: string },
   ): Promise<MessageResponseDto> {
-    return this.messagesService.createMessage(sessionId, dto, currentUser);
+    const message = await this.messagesService.createMessage(sessionId, dto, currentUser);
+
+    if (dto.role === 'user') {
+      await this.sessionsService.dispatchAiTask(
+        sessionId,
+        { content: dto.content, type: dto.type },
+        currentUser,
+      );
+    }
+
+    return message;
   }
 
   @Get()

@@ -40,7 +40,6 @@ export const SESSION_TRANSITIONS: TransitionRule[] = [
     from: SessionStatus.PROCESSING,
     event: SessionFsmEvent.AI_RESULT_RECEIVED,
     to: SessionStatus.DRAFT_READY,
-    mode: SessionMode.AUTO,
   },
   {
     from: SessionStatus.PROCESSING,
@@ -52,6 +51,21 @@ export const SESSION_TRANSITIONS: TransitionRule[] = [
     from: SessionStatus.IN_ELICITATION,
     event: SessionFsmEvent.USER_ANSWER_POSTED,
     to: SessionStatus.PROCESSING,
+  },
+  {
+    from: SessionStatus.IN_ELICITATION,
+    event: SessionFsmEvent.AI_TASK_PUBLISHED,
+    to: SessionStatus.PROCESSING,
+  },
+  {
+    from: SessionStatus.DRAFT_READY,
+    event: SessionFsmEvent.AI_TASK_PUBLISHED,
+    to: SessionStatus.PROCESSING,
+  },
+  {
+    from: SessionStatus.DRAFT_READY,
+    event: SessionFsmEvent.AI_RESULT_RECEIVED,
+    to: SessionStatus.DRAFT_READY,
   },
   {
     from: SessionStatus.DRAFT_READY,

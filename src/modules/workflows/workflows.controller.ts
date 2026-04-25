@@ -8,7 +8,6 @@ import {
   Param,
   Query,
   UseGuards,
-  Req,
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
@@ -18,13 +17,12 @@ import {
   Res,
   StreamableFile,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
-import { Request } from 'express';
 import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { CurrentUser } from '../../core/decorators/current-user.decorator';
 import { Roles } from '../../core/decorators/roles.decorator';
 import { UserRole } from '../../database/enums';
 import { AuditService } from '../audit/audit.service';
@@ -43,14 +41,11 @@ import {
 } from './dto/workflow.dto';
 import { ExportWorkflowDto, ExportFormat } from './dto/export-workflow.dto';
 
-interface AuthenticatedRequest extends Request {
-  user: { id: string; orgId: string; role: string };
-}
+type RequestUser = { id: string; orgId: string; role: string };
 
 @ApiTags('workflows')
 @ApiBearerAuth()
 @Controller('workflows')
-@UseGuards(AuthGuard('jwt'))
 export class WorkflowsController {
   constructor(
     private readonly workflowsService: WorkflowsService,
@@ -62,16 +57,16 @@ export class WorkflowsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new workflow' })
   @ApiResponse({ status: 201, description: 'Workflow created' })
-  async create(@Body() dto: CreateWorkflowDto, @Req() req: AuthenticatedRequest) {
-    const workflow = await this.workflowsService.create(dto, req.user.orgId, req.user.id);
+  async create(@Body() dto: CreateWorkflowDto, @CurrentUser() caller: RequestUser) {
+    const workflow = await this.workflowsService.create(dto, caller.orgId, caller.id);
     return { workflow };
   }
 
   @Get()
   @ApiOperation({ summary: 'List all workflows' })
   @ApiResponse({ status: 200, description: 'Workflows list' })
-  async findAll(@Query() filter: WorkflowFilterDto, @Req() req: AuthenticatedRequest) {
-    const { workflows, total } = await this.workflowsService.findAll(filter, req.user.orgId);
+  async findAll(@Query() filter: WorkflowFilterDto, @CurrentUser() caller: RequestUser) {
+    const { workflows, total } = await this.workflowsService.findAll(filter, caller.orgId);
     return {
       workflows,
       total,
@@ -82,8 +77,8 @@ export class WorkflowsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get workflow by ID' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthenticatedRequest) {
-    const workflow = await this.workflowsService.findOneWithLatestVersion(id, req.user.orgId);
+  async findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() caller: RequestUser) {
+    const workflow = await this.workflowsService.findOneWithLatestVersion(id, caller.orgId);
     return { workflow };
   }
 
@@ -92,14 +87,14 @@ export class WorkflowsController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateWorkflowDto | UpdateWorkflowWithVersionDto,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
     const workflow = await this.workflowsService.update(
       id,
       dto,
-      req.user.orgId,
-      req.user.id,
-      req.user.role,
+      caller.orgId,
+      caller.id,
+      caller.role,
     );
     return { workflow };
   }
@@ -110,7 +105,7 @@ export class WorkflowsController {
   async createVersion(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateVersionDto,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
     const dtoWithVersion: UpdateWorkflowWithVersionInput = {
       ...dto,
@@ -119,17 +114,17 @@ export class WorkflowsController {
     const workflow = await this.workflowsService.update(
       id,
       dtoWithVersion,
-      req.user.orgId,
-      req.user.id,
-      req.user.role,
+      caller.orgId,
+      caller.id,
+      caller.role,
     );
     return { workflow };
   }
 
   @Get(':id/versions')
   @ApiOperation({ summary: 'Get all versions of a workflow' })
-  async findVersions(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthenticatedRequest) {
-    const versions = await this.workflowsService.findVersions(id, req.user.orgId);
+  async findVersions(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() caller: RequestUser) {
+    const versions = await this.workflowsService.findVersions(id, caller.orgId);
     return { versions };
   }
 
@@ -138,9 +133,9 @@ export class WorkflowsController {
   async findVersion(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('versionNumber', ParseUUIDPipe) versionNumber: number,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
-    const version = await this.workflowsService.findVersion(id, versionNumber, req.user.orgId);
+    const version = await this.workflowsService.findVersion(id, versionNumber, caller.orgId);
     return { version };
   }
 
@@ -150,13 +145,13 @@ export class WorkflowsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Param('v1') v1: string,
     @Param('v2') v2: string,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
     const diff = await this.workflowsService.computeDiff(
       id,
       parseInt(v1, 10),
       parseInt(v2, 10),
-      req.user.orgId,
+      caller.orgId,
     );
     return { diff };
   }
@@ -167,12 +162,12 @@ export class WorkflowsController {
   async duplicate(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: DuplicateWorkflowDto,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
     const workflow = await this.workflowsService.duplicate(
       id,
-      req.user.orgId,
-      req.user.id,
+      caller.orgId,
+      caller.id,
       dto.title,
     );
     return { workflow };
@@ -180,8 +175,8 @@ export class WorkflowsController {
 
   @Get(':id/diagram-data')
   @ApiOperation({ summary: 'Get workflow diagram data' })
-  async getDiagramData(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthenticatedRequest) {
-    const diagramData = await this.workflowsService.getDiagramData(id, req.user.orgId);
+  async getDiagramData(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() caller: RequestUser) {
+    const diagramData = await this.workflowsService.getDiagramData(id, caller.orgId);
     return diagramData;
   }
 
@@ -190,9 +185,9 @@ export class WorkflowsController {
   @ApiOperation({ summary: 'Archive a workflow' })
   async archive(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
-    await this.workflowsService.archive(id, req.user.orgId, req.user.id, req.user.role);
+    await this.workflowsService.archive(id, caller.orgId, caller.id, caller.role);
   }
 
   @Get(':id/audit-log')
@@ -201,9 +196,9 @@ export class WorkflowsController {
   async getAuditLog(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: AuditLogQueryDto,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
-    const result = await this.auditService.getWorkflowAuditLog(id, req.user, query);
+    const result = await this.auditService.getWorkflowAuditLog(id, caller, query);
     return {
       entries: result.entries,
       total: result.total,
@@ -217,9 +212,9 @@ export class WorkflowsController {
   async getDecisionLog(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: AuditLogQueryDto,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
-    const result = await this.auditService.getDecisionLog(id, req.user, query);
+    const result = await this.auditService.getDecisionLog(id, caller, query);
     return {
       entries: result.entries,
       total: result.total,
@@ -235,10 +230,10 @@ export class WorkflowsController {
   async exportAuditLog(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() query: AuditLogExportQueryDto,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
     @Res({ passthrough: true }) response: Response,
   ): Promise<StreamableFile> {
-    const exportFile = await this.auditService.exportWorkflowAuditLog(id, req.user, query);
+    const exportFile = await this.auditService.exportWorkflowAuditLog(id, caller, query);
     response.setHeader('Content-Type', exportFile.contentType);
     response.setHeader('Content-Disposition', `attachment; filename="${exportFile.filename}"`);
 
@@ -253,13 +248,13 @@ export class WorkflowsController {
   @HttpCode(HttpStatus.OK)
   async exportToElsa(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
     const validation = await this.workflowExportService.validateExportability(
       id,
-      req.user.orgId,
-      req.user.id,
-      req.user.role,
+      caller.orgId,
+      caller.id,
+      caller.role,
     );
 
     if (!validation.canExport) {
@@ -278,14 +273,14 @@ export class WorkflowsController {
       throw new NotFoundException({ code: 'WORKFLOW_NOT_FOUND' });
     }
 
-    const workflow = await this.workflowsService.findOneWithLatestVersion(id, req.user.orgId);
+    const workflow = await this.workflowsService.findOneWithLatestVersion(id, caller.orgId);
     const versionNumber = workflow.currentVersion;
 
     const { json, filename } = await this.workflowExportService.exportToElsa(
       id,
       versionNumber,
-      req.user.id,
-      req.user.orgId,
+      caller.id,
+      caller.orgId,
     );
 
     return { json, filename };
@@ -295,13 +290,13 @@ export class WorkflowsController {
   @HttpCode(HttpStatus.ACCEPTED)
   async exportToBpmn(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
     const validation = await this.workflowExportService.validateExportability(
       id,
-      req.user.orgId,
-      req.user.id,
-      req.user.role,
+      caller.orgId,
+      caller.id,
+      caller.role,
     );
 
     if (!validation.canExport) {
@@ -321,14 +316,14 @@ export class WorkflowsController {
     }
 
     const correlationId = uuidv4();
-    const workflow = await this.workflowsService.findOneWithLatestVersion(id, req.user.orgId);
+    const workflow = await this.workflowsService.findOneWithLatestVersion(id, caller.orgId);
     const versionNumber = workflow.currentVersion;
 
     return this.workflowExportService.exportToBpmnAsync(
       id,
       versionNumber,
-      req.user.id,
-      req.user.orgId,
+      caller.id,
+      caller.orgId,
       correlationId,
     );
   }
@@ -337,13 +332,13 @@ export class WorkflowsController {
   @HttpCode(HttpStatus.ACCEPTED)
   async exportToPdf(
     @Param('id', ParseUUIDPipe) id: string,
-    @Req() req: AuthenticatedRequest,
+    @CurrentUser() caller: RequestUser,
   ) {
     const validation = await this.workflowExportService.validateExportability(
       id,
-      req.user.orgId,
-      req.user.id,
-      req.user.role,
+      caller.orgId,
+      caller.id,
+      caller.role,
     );
 
     if (!validation.canExport) {
@@ -363,14 +358,14 @@ export class WorkflowsController {
     }
 
     const correlationId = uuidv4();
-    const workflow = await this.workflowsService.findOneWithLatestVersion(id, req.user.orgId);
+    const workflow = await this.workflowsService.findOneWithLatestVersion(id, caller.orgId);
     const versionNumber = workflow.currentVersion;
 
     return this.workflowExportService.exportToPdfAsync(
       id,
       versionNumber,
-      req.user.id,
-      req.user.orgId,
+      caller.id,
+      caller.orgId,
       correlationId,
     );
   }

@@ -17,7 +17,9 @@
     "migration:generate": "pnpm typeorm migration:generate",
     "migration:run": "pnpm typeorm migration:run",
     "migration:revert": "pnpm typeorm migration:revert",
-    "db:reset": "pnpm typeorm schema:drop && pnpm migration:run"
+    "db:reset": "pnpm typeorm schema:drop && pnpm migration:run",
+    "db:seed": "ts-node src/database/seed.ts",
+    "db:reseed": "pnpm db:reset && pnpm db:seed"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

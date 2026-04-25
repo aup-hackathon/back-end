@@ -45,6 +45,18 @@ export class Workflow {
   @Column({ type: 'text', array: true, default: () => "'{}'" })
   tags: string[];
 
+  @Column({ type: 'text', nullable: true })
+  shareToken: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  shareExpiresAt: Date | null;
+
+  @Column({ type: 'integer', nullable: true })
+  shareMaxViews: number | null;
+
+  @Column({ type: 'integer', default: 0 })
+  shareViewCount: number;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 

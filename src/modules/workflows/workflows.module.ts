@@ -13,6 +13,8 @@ import { WorkflowsController } from './workflows.controller';
 import { WorkflowsService } from './workflows.service';
 import { ElsaMappingService } from './services/elsa-mapping.service';
 import { WorkflowExportService } from './services/workflow-export.service';
+import { ShareWorkflowController } from './controllers/share-workflow.controller';
+import { ShareWorkflowService } from './services/share-workflow.service';
 
 @Module({
   imports: [
@@ -29,8 +31,8 @@ import { WorkflowExportService } from './services/workflow-export.service';
       PipelineExecution,
     ]),
   ],
-  controllers: [WorkflowsController],
-  providers: [WorkflowsService, ElsaMappingService, WorkflowExportService],
-  exports: [WorkflowsService, ElsaMappingService, WorkflowExportService],
+  controllers: [WorkflowsController, ShareWorkflowController],
+  providers: [WorkflowsService, ElsaMappingService, WorkflowExportService, ShareWorkflowService],
+  exports: [WorkflowsService, ElsaMappingService, WorkflowExportService, ShareWorkflowService],
 })
 export class WorkflowsModule { }

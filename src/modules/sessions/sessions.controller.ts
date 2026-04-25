@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseUUIDPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../core/decorators/current-user.decorator';
@@ -32,13 +32,13 @@ export class SessionsController {
   @Get(':id')
   @UseGuards(SessionOrgGuard)
   @ApiOperation({ summary: 'Get session lifecycle state' })
-  get(@Param('id') sessionId: string, @CurrentUser() caller: RequestUser) {
+  get(@Param('id', ParseUUIDPipe) sessionId: string, @CurrentUser() caller: RequestUser) {
     return this.sessionsService.getSession(sessionId, caller);
   }
 
   @Get('workflow/:workflowId')
   @ApiOperation({ summary: 'Get session by workflow ID' })
-  getByWorkflowId(@Param('workflowId') workflowId: string, @CurrentUser() caller: RequestUser) {
+  getByWorkflowId(@Param('workflowId', ParseUUIDPipe) workflowId: string, @CurrentUser() caller: RequestUser) {
     return this.sessionsService.getSessionByWorkflowId(workflowId, caller);
   }
 
@@ -46,7 +46,7 @@ export class SessionsController {
   @UseGuards(SessionOrgGuard)
   @ApiOperation({ summary: 'Switch session mode' })
   updateMode(
-    @Param('id') sessionId: string,
+    @Param('id', ParseUUIDPipe) sessionId: string,
     @Body() dto: UpdateSessionModeDto,
     @CurrentUser() caller: RequestUser,
   ) {
@@ -56,28 +56,28 @@ export class SessionsController {
   @Post(':id/finalize')
   @UseGuards(SessionOrgGuard)
   @ApiOperation({ summary: 'Finalize session into draft ready state' })
-  finalize(@Param('id') sessionId: string, @CurrentUser() caller: RequestUser) {
+  finalize(@Param('id', ParseUUIDPipe) sessionId: string, @CurrentUser() caller: RequestUser) {
     return this.sessionsService.finalize(sessionId, caller);
   }
 
   @Get(':id/workflow-state')
   @UseGuards(SessionOrgGuard)
   @ApiOperation({ summary: 'Get latest workflow elements for this session' })
-  getWorkflowState(@Param('id') sessionId: string, @CurrentUser() caller: RequestUser) {
+  getWorkflowState(@Param('id', ParseUUIDPipe) sessionId: string, @CurrentUser() caller: RequestUser) {
     return this.sessionsService.getWorkflowState(sessionId, caller);
   }
 
   @Get(':id/progress')
   @UseGuards(SessionOrgGuard)
   @ApiOperation({ summary: 'Get latest AI pipeline progress for this session' })
-  getProgress(@Param('id') sessionId: string, @CurrentUser() caller: RequestUser) {
+  getProgress(@Param('id', ParseUUIDPipe) sessionId: string, @CurrentUser() caller: RequestUser) {
     return this.sessionsService.getProgress(sessionId, caller);
   }
 
   @Delete(':id')
   @UseGuards(SessionOrgGuard)
   @ApiOperation({ summary: 'Archive a session and related rows' })
-  archive(@Param('id') sessionId: string, @CurrentUser() caller: RequestUser) {
+  archive(@Param('id', ParseUUIDPipe) sessionId: string, @CurrentUser() caller: RequestUser) {
     return this.sessionsService.archive(sessionId, caller);
   }
 
@@ -86,7 +86,7 @@ export class SessionsController {
   @UseGuards(SessionOrgGuard)
   @ApiOperation({ summary: 'Admin-only manual session status override' })
   overrideStatus(
-    @Param('id') sessionId: string,
+    @Param('id', ParseUUIDPipe) sessionId: string,
     @Body() dto: UpdateSessionStatusDto,
     @CurrentUser() caller: RequestUser,
   ) {

@@ -34,6 +34,10 @@ export class SessionOrgGuard implements CanActivate {
     if (!caller?.orgId) throw new ForbiddenException('Organization scope is required');
     if (!sessionId) return true;
 
+    if (!require('class-validator').isUUID(sessionId)) {
+      throw new require('@nestjs/common').BadRequestException('Validation failed (uuid is expected)');
+    }
+
     const session = await this.sessionsRepository.findOne({ where: { id: sessionId } });
     if (!session) throw new NotFoundException('Session not found');
 

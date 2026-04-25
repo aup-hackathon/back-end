@@ -10,11 +10,15 @@ import { RequestContextService } from './core/context/request-context.service';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { CorrelationIdInterceptor } from './core/interceptors/correlation-id.interceptor';
 import { LoggingInterceptor } from './core/interceptors/logging.interceptor';
+import { WsJwtAuthAdapter } from './modules/realtime/adapters/ws-jwt-auth.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const logger = app.get(Logger);
   app.useLogger(logger);
+
+  // Apply custom WebSocket adapter with JWT authentication on handshake
+  app.useWebSocketAdapter(new WsJwtAuthAdapter(app));
 
   if (process.env.NODE_ENV === 'production' && process.env.DEV_BYPASS_AUTH === 'true') {
     logger.error('DEV_BYPASS_AUTH=true is not allowed in production');
